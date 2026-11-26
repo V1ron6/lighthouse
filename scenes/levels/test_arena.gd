@@ -1,13 +1,24 @@
 extends Node3D
-## Stage 2 test arena: a flat floor, walls, some cover, practice targets,
-## the player and the on-screen touch controls. Everything is built in code.
+## Test arena: a flat floor, walls, some cover, practice targets, the player,
+## the on-screen touch controls and a timed spawner of scouts.
+## Everything is built in code.
 
 const PlayerScene := preload("res://scenes/player/player.tscn")
 const TouchScene := preload("res://scenes/ui/touch_controls.tscn")
 const TargetScript := preload("res://scenes/levels/target.gd")
+const ScoutScript := preload("res://scenes/enemies/scout.gd")
+
+const MAX_SCOUTS := 6
+const SPAWN_INTERVAL := 2.5
+const PLAYER_START := Vector3(0, 1, 14)
 
 var _hud_label: Label
+var _heat_bar: ProgressBar
+var _damage_flash: ColorRect
 var _touch: Control
+var _player = null
+var _kills := 0
+var _last_health := 100
 
 
 func _ready() -> void:
@@ -16,6 +27,7 @@ func _ready() -> void:
 	_build_targets()
 	_build_ui()
 	_spawn_player()
+	_build_spawner()
 
 
 func _build_environment() -> void:
@@ -58,10 +70,51 @@ func _build_targets() -> void:
 
 
 func _spawn_player() -> void:
-	var player := PlayerScene.instantiate()
-	player.position = Vector3(0, 1, 14)
-	player.touch = _touch
-	add_child(player)
+	_player = PlayerScene.instantiate()
+	_player.position = PLAYER_START
+	_player.touch = _touch
+	add_child(_player)
+	_player.health_changed.connect(_on_player_health_changed)
+	_player.died.connect(_on_player_died)
+	_player.rifle.heat_changed.connect(_on_heat_changed)
+	_refresh_hud()
+
+
+func _build_spawner() -> void:
+	var timer := Timer.new()
+	timer.wait_time = SPAWN_INTERVAL
+	timer.autostart = true
+	timer.timeout.connect(_spawn_scout)
+	add_child(timer)
+
+
+func _spawn_scout() -> void:
+	if get_tree().get_nodes_in_group("enemies").size() >= MAX_SCOUTS:
+		return
+	var scout: CharacterBody3D = ScoutScript.new()
+	var angle := randf() * TAU
+	scout.position = Vector3(cos(angle) * 26.0, 0.2, sin(angle) * 26.0)
+	add_child(scout)
+
+
+func _on_player_health_changed(current: int, _maximum: int) -> void:
+	if current < _last_health:
+		_damage_flash.color.a = 0.35
+		create_tween().tween_property(_damage_flash, "color:a", 0.0, 0.3)
+	_last_health = current
+	_refresh_hud()
+
+
+func _on_player_died() -> void:
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		enemy.queue_free()
+	_player.global_position = PLAYER_START
+	_player.reset()
+
+
+func _on_heat_changed(heat: float, overheated: bool) -> void:
+	_heat_bar.value = heat
+	_heat_bar.modulate = Color(1.0, 0.3, 0.3) if overheated else Color(0.3, 0.88, 1.0)
 
 
 func _build_ui() -> void:
@@ -70,6 +123,23 @@ func _build_ui() -> void:
 
 	_touch = TouchScene.instantiate()
 	layer.add_child(_touch)
+
+	_damage_flash = ColorRect.new()
+	_damage_flash.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_damage_flash.color = Color(1.0, 0.1, 0.1, 0.0)
+	_damage_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(_damage_flash)
+
+	_heat_bar = ProgressBar.new()
+	_heat_bar.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_heat_bar.offset_left = -150.0
+	_heat_bar.offset_right = 150.0
+	_heat_bar.offset_top = 24.0
+	_heat_bar.offset_bottom = 40.0
+	_heat_bar.max_value = 100.0
+	_heat_bar.show_percentage = false
+	_heat_bar.modulate = Color(0.3, 0.88, 1.0)
+	layer.add_child(_heat_bar)
 
 	_hud_label = Label.new()
 	_hud_label.position = Vector2(24, 20)
@@ -88,18 +158,25 @@ func _build_ui() -> void:
 
 	if not _touch.visible:
 		var hint := Label.new()
-		hint.text = "WASD move   |   mouse look (click to capture, Esc to release)   |   left click or Space to fire"
+		hint.text = "WASD move   |   mouse look (click to capture, Esc to release)   |   left click or Space to fire   |   the rifle overheats"
 		hint.position = Vector2(24, 660)
 		layer.add_child(hint)
 
 	EventBus.qubits_changed.connect(_refresh_hud)
 	EventBus.points_changed.connect(_refresh_hud)
 	EventBus.rank_changed.connect(_refresh_hud)
+	EventBus.enemy_killed.connect(_on_enemy_killed)
 	_refresh_hud()
 
 
 func _refresh_hud(_a: Variant = null, _b: Variant = null) -> void:
-	_hud_label.text = "%s   |   %d qubits" % [GameManager.get_rank_name(), GameManager.qubits]
+	var health: int = _player.health if _player != null else 100
+	_hud_label.text = "%s   |   %d qubits\nHealth %d   Kills %d" % [GameManager.get_rank_name(), GameManager.qubits, health, _kills]
+
+
+func _on_enemy_killed(_enemy_type: String) -> void:
+	_kills += 1
+	_refresh_hud()
 
 
 func _go_back() -> void:

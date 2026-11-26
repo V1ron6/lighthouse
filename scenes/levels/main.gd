@@ -48,7 +48,7 @@ func _add_button(parent: Node, text: String, action: Callable) -> void:
 
 
 func _refresh(_a: Variant = null, _b: Variant = null) -> void:
-	_label.text = "LIGHTHOUSE  |  Stage 2\nRank: %s  (%d pts, %d to next)\nQubits: %d\nBase: %d/%d   Core: %d/%d" % [
+	_label.text = "LIGHTHOUSE  |  Stage 3\nRank: %s  (%d pts, %d to next)\nQubits: %d\nBase: %d/%d   Core: %d/%d" % [
 		GameManager.get_rank_name(),
 		GameManager.points,
 		GameManager.points_to_next_rank(),

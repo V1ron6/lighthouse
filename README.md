@@ -38,7 +38,11 @@ Planning phase. The design is settled and no game code exists yet.
 | --- | --- | --- |
 | Move | WASD | Left thumb joystick (appears where you touch) |
 | Look | Mouse (click to capture, Esc to release) | Drag on the right side |
-| Fire | Left click or Space | Fire button, bottom right |
+| Fire (hold) | Left click or Space | Fire button, bottom right |
+
+### What to try in the arena
+
+Scouts spawn around the edge and rush you. Each takes two rifle hits. The rifle builds heat as you fire (bar at the top), locks if it overheats, and recovers once cooled. Scouts bite for 10 damage. At 0 health you respawn at the start.
 
 ## Project structure
 

@@ -4,26 +4,29 @@ extends CharacterBody3D
 ##          left click or Space to fire.
 ## Phone:   TouchControls node assigned to `touch` (joystick, look area, fire button).
 
-signal fired
+signal died
+signal health_changed(current: int, maximum: int)
+
+const RifleScript := preload("res://scenes/weapons/energy_rifle.gd")
 
 const SPEED := 6.0
 const EYE_HEIGHT := 1.6
 const MAX_PITCH := PI * 85.0 / 180.0
-const FIRE_INTERVAL := 0.15
-const FIRE_RANGE := 100.0
-const FIRE_DAMAGE := 25
+const MAX_HEALTH := 100
 
 @export var mouse_sensitivity: float = 0.0025
 @export var touch_sensitivity: float = 0.004
 
 ## Set by the level. Anything with move_vector, fire_held and consume_look().
 var touch = null
+## The energy rifle node (Variant on purpose, so its script members resolve at runtime).
+var rifle = null
 
+var health: int = MAX_HEALTH
 var head: Node3D
 var camera: Camera3D
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
-var _cooldown := 0.0
 var _has_touchscreen := false
 
 
@@ -48,6 +51,10 @@ func _ready() -> void:
 	camera.fov = 75.0
 	camera.current = true
 	head.add_child(camera)
+
+	rifle = RifleScript.new()
+	rifle.exclude_rid = get_rid()
+	camera.add_child(rifle)
 
 
 func _exit_tree() -> void:
@@ -84,48 +91,28 @@ func _physics_process(delta: float) -> void:
 		velocity.y -= _gravity * delta
 	move_and_slide()
 
-	_cooldown -= delta
-	var wants_fire := Input.is_action_pressed("fire") or (touch != null and touch.fire_held)
-	if wants_fire and _cooldown <= 0.0:
-		_cooldown = FIRE_INTERVAL
-		_fire()
+	rifle.trigger_held = Input.is_action_pressed("fire") or (touch != null and touch.fire_held)
+
+
+func take_damage(amount: int) -> void:
+	if health <= 0 or amount <= 0:
+		return
+	health = maxi(0, health - amount)
+	health_changed.emit(health, MAX_HEALTH)
+	if health == 0:
+		died.emit()
+
+
+## Full health again. The level moves the player back to the start.
+func reset() -> void:
+	health = MAX_HEALTH
+	velocity = Vector3.ZERO
+	health_changed.emit(health, MAX_HEALTH)
 
 
 func _rotate_view(amount: Vector2) -> void:
 	rotate_y(-amount.x)
 	head.rotation.x = clampf(head.rotation.x - amount.y, -MAX_PITCH, MAX_PITCH)
-
-
-## Placeholder hitscan shot. The real energy rifle comes in Stage 3.
-func _fire() -> void:
-	fired.emit()
-	var from := camera.global_position
-	var to := from + (-camera.global_transform.basis.z) * FIRE_RANGE
-	var query := PhysicsRayQueryParameters3D.create(from, to)
-	query.exclude = [get_rid()]
-	var hit := get_world_3d().direct_space_state.intersect_ray(query)
-	if hit.is_empty():
-		return
-	var collider: Object = hit["collider"]
-	if collider != null and collider.has_method("take_hit"):
-		collider.take_hit(FIRE_DAMAGE)
-	_spawn_impact(hit["position"])
-
-
-func _spawn_impact(position_in_world: Vector3) -> void:
-	var marker := MeshInstance3D.new()
-	var sphere := SphereMesh.new()
-	sphere.radius = 0.08
-	sphere.height = 0.16
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(1.0, 0.8, 0.4)
-	material.emission_enabled = true
-	material.emission = Color(1.0, 0.8, 0.4)
-	sphere.material = material
-	marker.mesh = sphere
-	get_parent().add_child(marker)
-	marker.global_position = position_in_world
-	get_tree().create_timer(0.2).timeout.connect(marker.queue_free)
 
 
 func _ensure_actions() -> void:

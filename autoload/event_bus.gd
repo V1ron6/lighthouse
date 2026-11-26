@@ -19,6 +19,9 @@ signal base_attacked(strength: int)
 ## choice is "defend" or "continue"
 signal base_attack_resolved(choice: String)
 
+# --- Combat ---
+signal enemy_killed(enemy_type: String)
+
 # --- Missions ---
 signal mission_started(mission_id: String)
 signal mission_completed(mission_id: String, success: bool)

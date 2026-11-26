@@ -5,6 +5,23 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [Stage 3] - 2026-11-26
+
+### Added
+- `scenes/weapons/energy_rifle.gd`: starter energy rifle. Hitscan, hold to fire, 25 damage, 0.15s between shots. Builds heat (8 per shot), overheats at 100 and locks until cooled to 40. Visible rifle model, muzzle flash, bolt tracer and impact spark.
+- `scenes/enemies/scout.gd`: scout enemy. 40 health, speed 7, weaving chase toward the player, bites for 10 damage every 0.8s. Bio-mechanical look from simple shapes (flesh body, metal plate, glowing eye). Flashes when hit and shrinks away on death.
+- Player health (100), `take_damage`, `reset`, and `died` and `health_changed` signals.
+- Arena: scouts spawn every 2.5s on the arena edge (max 6 alive), kill counter, health readout, heat bar, red flash when hurt, respawn on death.
+- `EventBus.enemy_killed(enemy_type)`.
+
+### Changed
+- The placeholder hitscan shot moved out of the player and into the rifle.
+
+### Notes
+- Scouts steer in a straight line toward the player. Navigation around obstacles comes with the base in Stage 4.
+- Kills do not give points or qubits yet. That is wired up with missions and rank.
+- Not yet run in Godot. Report any errors from the editor and they will be fixed in the next update.
+
 ## [Stage 2] - 2026-11-26
 
 ### Added
