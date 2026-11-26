@@ -133,6 +133,23 @@ func repair_base(amount: int) -> void:
 	EventBus.base_health_changed.emit(base_health, MAX_BASE_HEALTH)
 
 
+func repair_core(amount: int) -> void:
+	if amount <= 0:
+		return
+	core_integrity = mini(MAX_CORE_INTEGRITY, core_integrity + amount)
+	EventBus.core_integrity_changed.emit(core_integrity, MAX_CORE_INTEGRITY)
+
+
+## Full health for the base and core, and no mission running.
+func reset_base() -> void:
+	base_health = MAX_BASE_HEALTH
+	core_integrity = MAX_CORE_INTEGRITY
+	mission_state = MissionState.NONE
+	current_mission_id = ""
+	EventBus.base_health_changed.emit(base_health, MAX_BASE_HEALTH)
+	EventBus.core_integrity_changed.emit(core_integrity, MAX_CORE_INTEGRITY)
+
+
 func damage_core(amount: int) -> void:
 	if amount <= 0:
 		return

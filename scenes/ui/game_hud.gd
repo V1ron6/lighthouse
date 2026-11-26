@@ -1,0 +1,153 @@
+extends CanvasLayer
+## Shared in-game HUD: touch controls, rank and qubits, a status line,
+## heat bar, damage flash, banner messages, Back button and a game-over panel.
+## Keeps working while the game is paused.
+
+signal back_pressed
+signal restart_pressed
+
+const TouchScene := preload("res://scenes/ui/touch_controls.tscn")
+
+## The touch controls node. Hand this to the player as `touch`.
+var touch: Control
+
+var _flash: ColorRect
+var _heat_bar: ProgressBar
+var _info: Label
+var _status: Label
+var _banner: Label
+var _banner_tween: Tween
+var _over_panel: ColorRect
+var _over_label: Label
+var _last_health := 100
+
+
+func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
+
+	touch = TouchScene.instantiate()
+	add_child(touch)
+
+	_flash = ColorRect.new()
+	_flash.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_flash.color = Color(1.0, 0.1, 0.1, 0.0)
+	_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_flash)
+
+	_heat_bar = ProgressBar.new()
+	_heat_bar.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_heat_bar.offset_left = -150.0
+	_heat_bar.offset_right = 150.0
+	_heat_bar.offset_top = 24.0
+	_heat_bar.offset_bottom = 40.0
+	_heat_bar.max_value = 100.0
+	_heat_bar.show_percentage = false
+	_heat_bar.modulate = Color(0.3, 0.88, 1.0)
+	add_child(_heat_bar)
+
+	_info = Label.new()
+	_info.position = Vector2(24, 20)
+	_info.add_theme_font_size_override("font_size", 22)
+	add_child(_info)
+
+	_status = Label.new()
+	_status.position = Vector2(24, 54)
+	_status.add_theme_font_size_override("font_size", 22)
+	add_child(_status)
+
+	_banner = Label.new()
+	_banner.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	_banner.offset_top = 110.0
+	_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_banner.add_theme_font_size_override("font_size", 40)
+	_banner.modulate.a = 0.0
+	_banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_banner)
+
+	var back := _make_button("Back", func(): back_pressed.emit())
+	back.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	back.offset_left = -170.0
+	back.offset_right = -20.0
+	back.offset_top = 20.0
+	back.offset_bottom = 76.0
+	add_child(back)
+
+	_build_game_over()
+
+	EventBus.qubits_changed.connect(_refresh_info)
+	EventBus.points_changed.connect(_refresh_info)
+	EventBus.rank_changed.connect(_refresh_info)
+	_refresh_info()
+
+
+## Connect the player's health and rifle heat to the HUD.
+func bind_player(player) -> void:
+	player.health_changed.connect(_on_player_health_changed)
+	player.rifle.heat_changed.connect(_on_heat_changed)
+	_last_health = player.health
+
+
+func set_status(text: String) -> void:
+	_status.text = text
+
+
+func show_banner(text: String, seconds: float = 2.0) -> void:
+	_banner.text = text
+	_banner.modulate.a = 1.0
+	if _banner_tween != null:
+		_banner_tween.kill()
+	_banner_tween = create_tween()
+	_banner_tween.tween_interval(seconds)
+	_banner_tween.tween_property(_banner, "modulate:a", 0.0, 0.5)
+
+
+func show_game_over(text: String) -> void:
+	_over_label.text = text
+	_over_panel.visible = true
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
+func _build_game_over() -> void:
+	_over_panel = ColorRect.new()
+	_over_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_over_panel.color = Color(0.0, 0.0, 0.0, 0.7)
+	_over_panel.visible = false
+	add_child(_over_panel)
+
+	var box := VBoxContainer.new()
+	box.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	box.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	box.grow_vertical = Control.GROW_DIRECTION_BOTH
+	box.add_theme_constant_override("separation", 20)
+	_over_panel.add_child(box)
+
+	_over_label = Label.new()
+	_over_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_over_label.add_theme_font_size_override("font_size", 36)
+	box.add_child(_over_label)
+	box.add_child(_make_button("Try again", func(): restart_pressed.emit()))
+	box.add_child(_make_button("Back to menu", func(): back_pressed.emit()))
+
+
+func _make_button(text: String, action: Callable) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.custom_minimum_size = Vector2(320, 64)
+	button.pressed.connect(action)
+	return button
+
+
+func _refresh_info(_a: Variant = null, _b: Variant = null) -> void:
+	_info.text = "%s   |   %d qubits" % [GameManager.get_rank_name(), GameManager.qubits]
+
+
+func _on_player_health_changed(current: int, maximum: int) -> void:
+	if current < _last_health:
+		_flash.color.a = 0.35
+		create_tween().tween_property(_flash, "color:a", 0.0, 0.3)
+	_last_health = current
+
+
+func _on_heat_changed(heat: float, overheated: bool) -> void:
+	_heat_bar.value = heat
+	_heat_bar.modulate = Color(1.0, 0.3, 0.3) if overheated else Color(0.3, 0.88, 1.0)

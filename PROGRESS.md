@@ -2,7 +2,7 @@
 
 Lighthouse is built in stages. After each stage this file and `CHANGELOG.md` are updated and a full project zip is delivered.
 
-**Current stage:** Stage 3 complete. Next: Stage 4.
+**Current stage:** Stage 4 complete. Next: Stage 5.
 
 | Stage | Goal | Status |
 | --- | --- | --- |
@@ -10,8 +10,8 @@ Lighthouse is built in stages. After each stage this file and `CHANGELOG.md` are
 | 1 | Godot project file, Mobile renderer, `game_manager` and `event_bus` autoloads, test screen | Done (untested in Godot) |
 | 2 | Test arena: first-person player, touch joystick and aim area, fire button | Done (untested in Godot) |
 | 3 | Energy rifle and the first enemy (scout) with basic AI | Done (untested in Godot) |
-| 4 | Lighthouse base scene, power core and wave defence | Next |
-| 5 | Missions and the base-attack choice (defend or continue) | Planned |
+| 4 | Lighthouse base scene, power core and wave defence | Done (untested in Godot) |
+| 5 | Missions and the base-attack choice (defend or continue) | Next |
 | 6 | Rank, points, demotion and rank unlocks | Planned |
 | 7 | Qubits, automated colony trade and the Market screen | Planned |
 | 8 | Hangar and fighter jet with touch flight controls | Planned |
@@ -31,6 +31,7 @@ Lighthouse is built in stages. After each stage this file and `CHANGELOG.md` are
 - Changing prices: raw goods (ammo, fuel, supplies). Fixed prices: jets, vehicles, weapons, defences.
 - Starting loadout: a jet, a turret, 3,500 qubits, a gun (starter energy rifle) and a sword or machete (new melee weapon).
 - Story is told by radio. Two endings.
+- Attacks on the lighthouse hit base health first, then the power core. Core at 0 is game over.
 
 ## Open items
 

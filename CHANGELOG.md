@@ -5,6 +5,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [Stage 4] - 2026-11-26
+
+### Added
+- `scenes/base/base_defence.tscn` and `base_defence.gd`: the defence level. Big flat map with invisible boundary walls, the lighthouse in the middle, your turret(s), and the player starting in front of the tower. "Defend the lighthouse" button on the main test screen.
+- `scenes/base/lighthouse_base.gd`: the lighthouse. Striped tower, glowing lamp room with a rotating beam, and a window showing the power core that pulses and shifts from amber to red as core integrity drops. Damage hits base health first, then the core. Enemy bites do 40% damage to the lighthouse.
+- `scenes/base/turret.gd`: automatic turret. Range 28, 18 damage every 0.45s. One is placed per turret in the inventory, up to 4 spots.
+- `scenes/base/wave_manager.gd`: endless waves of scouts. Wave n has 4 + 2 x (n - 1) scouts, at most 8 alive, 1.2s between spawns, 8s break between waves, 4s before the first wave. Scouts spawn on a ring around the map.
+- `scenes/ui/game_hud.gd`: shared in-game HUD with touch controls, rank and qubits, status line, heat bar, damage flash, wave banners, Back button and a game-over panel. Works while paused.
+- `scripts/fx.gd`: shared tracer and glow-material helpers.
+- `GameManager.reset_base()` and `repair_core()`.
+- `EventBus.wave_started` and `wave_cleared`.
+- Game over when the core is destroyed, with Try again and Back to menu. 150 base health restored when a wave is cleared. Dying as the player respawns you at the start.
+
+### Changed
+- Scouts now go for the lighthouse and switch to the player when the player is within 12 metres. In the test arena (no lighthouse) they still hunt the player.
+- Scouts slide along walls and cover when blocked, so they do not get stuck pushing into them.
+
+### Notes
+- No navigation mesh yet. Scouts steer in a straight line and slide off obstacles. A real navigation mesh can come later if needed.
+- Wave rewards, points and mission links come in Stages 5 to 7.
+- Not yet run in Godot. Report any errors from the editor and they will be fixed in the next update.
+
 ## [Stage 3] - 2026-11-26
 
 ### Added

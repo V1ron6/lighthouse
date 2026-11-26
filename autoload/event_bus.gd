@@ -21,6 +21,8 @@ signal base_attack_resolved(choice: String)
 
 # --- Combat ---
 signal enemy_killed(enemy_type: String)
+signal wave_started(wave: int)
+signal wave_cleared(wave: int)
 
 # --- Missions ---
 signal mission_started(mission_id: String)

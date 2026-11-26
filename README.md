@@ -44,6 +44,10 @@ Planning phase. The design is settled and no game code exists yet.
 
 Scouts spawn around the edge and rush you. Each takes two rifle hits. The rifle builds heat as you fire (bar at the top), locks if it overheats, and recovers once cooled. Scouts bite for 10 damage. At 0 health you respawn at the start.
 
+### Defend the lighthouse
+
+Press **Defend the lighthouse** on the test screen. Waves of scouts attack the tower. Damage hits the base health first, then the power core. If the core reaches 0 it is game over. A turret from your starting loadout helps. Between waves the base is repaired a little.
+
 ## Project structure
 
 ```

@@ -1,7 +1,9 @@
 extends CharacterBody3D
 ## Scout: small, fast, weak. Bio-mechanical: mostly flesh with a metal implant
 ## and a glowing eye. Chases the player in a weaving line and bites on contact.
-## Basic steering only. Navigation around obstacles comes with the base in Stage 4.
+## Goes for the lighthouse, but turns on the player if the player gets close.
+## With no lighthouse in the level (the test arena) it just hunts the player.
+## Steering only, no navigation mesh: it slides along walls and cover.
 
 signal died
 
@@ -11,6 +13,8 @@ const ATTACK_RANGE := 1.8
 const ATTACK_DAMAGE := 10
 const ATTACK_INTERVAL := 0.8
 const TURN_SPEED := 10.0
+## Distance at which a scout switches from the lighthouse to the player.
+const AGGRO_RANGE := 12.0
 
 const FLESH_COLOR := Color(0.75, 0.35, 0.4)
 const METAL_COLOR := Color(0.45, 0.5, 0.58)
@@ -18,6 +22,11 @@ const EYE_COLOR := Color(1.0, 0.65, 0.2)
 
 var health := MAX_HEALTH
 var target: Node3D = null
+
+var _player: Node3D = null
+var _base: Node3D = null
+var _wall_normal := Vector3.ZERO
+var _side := 1.0 if randf() < 0.5 else -1.0
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _attack_cooldown := 0.0
@@ -78,22 +87,33 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if _dead:
 		return
-	if target == null or not is_instance_valid(target):
-		target = get_tree().get_first_node_in_group("player") as Node3D
-		if target == null:
-			return
+	_pick_target()
+	if target == null:
+		return
+
+	var reach_offset := 0.0
+	if target.has_method("get_attack_radius"):
+		reach_offset = target.get_attack_radius()
 
 	var to_target := target.global_position - global_position
 	to_target.y = 0.0
 	var distance := to_target.length()
+	var edge_distance := distance - reach_offset
 	var direction := to_target / distance if distance > 0.01 else Vector3.ZERO
 
 	# Weave from side to side while far away, so a group does not move as one line.
 	var side := Vector3(-direction.z, 0.0, direction.x)
-	var weave := sin(Time.get_ticks_msec() * 0.004 + _weave_phase) * 0.35 * clampf(distance / 10.0, 0.0, 1.0)
+	var weave := sin(Time.get_ticks_msec() * 0.004 + _weave_phase) * 0.35 * clampf(edge_distance / 10.0, 0.0, 1.0)
 	var move_direction := (direction + side * weave).normalized()
 
-	if distance > ATTACK_RANGE * 0.8:
+	# If last frame ran into something, go along it instead of pushing into it.
+	if _wall_normal != Vector3.ZERO:
+		var slid := move_direction.slide(_wall_normal)
+		if slid.length() < 0.3:
+			slid = Vector3(-_wall_normal.z, 0.0, _wall_normal.x) * _side
+		move_direction = slid.normalized()
+
+	if edge_distance > ATTACK_RANGE * 0.8:
 		velocity.x = move_direction.x * SPEED
 		velocity.z = move_direction.z * SPEED
 	else:
@@ -110,10 +130,36 @@ func _physics_process(delta: float) -> void:
 
 	move_and_slide()
 
+	_wall_normal = Vector3.ZERO
+	if is_on_wall():
+		var normal := get_wall_normal()
+		normal.y = 0.0
+		if normal.length() > 0.01:
+			_wall_normal = normal.normalized()
+
 	_attack_cooldown -= delta
-	if distance <= ATTACK_RANGE and _attack_cooldown <= 0.0 and target.has_method("take_damage"):
+	if edge_distance <= ATTACK_RANGE and _attack_cooldown <= 0.0 and target.has_method("take_damage"):
 		target.take_damage(ATTACK_DAMAGE)
 		_attack_cooldown = ATTACK_INTERVAL
+
+
+## The player if close (or if there is no lighthouse), otherwise the lighthouse.
+func _pick_target() -> void:
+	if _player == null or not is_instance_valid(_player):
+		_player = get_tree().get_first_node_in_group("player") as Node3D
+	if _base == null or not is_instance_valid(_base):
+		_base = get_tree().get_first_node_in_group("base") as Node3D
+
+	if _base == null:
+		target = _player
+		return
+	if _player != null:
+		var to_player := _player.global_position - global_position
+		to_player.y = 0.0
+		if to_player.length() <= AGGRO_RANGE:
+			target = _player
+			return
+	target = _base
 
 
 func take_hit(damage: int) -> void:
