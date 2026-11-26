@@ -5,20 +5,30 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-### Changed
-- Logo redesigned as a shield made of honeycomb cells, with the lighthouse inside it.
+## [Stage 1] - 2026-11-26
 
-### Design
-- Currency named qubit; Market sells everything; some prices vary, others fixed; fallen colonies pay less and sell cheaper.
-- First-launch intro story added to the plan.
-- Bought items need the matching rank. Raw goods have changing prices, everything else is fixed.
-- Starting loadout: jet, turret, 3,500 qubits, gun, sword or machete.
+### Added
+- `project.godot`: Godot 4.3, Mobile renderer, landscape orientation, 1280x720 viewport, logo as project icon.
+- `autoload/event_bus.gd`: global signals for economy, rank, base, missions, colonies and story.
+- `autoload/game_manager.gd`: qubits (start 3,500), points and the seven ranks with demotion, base health and core integrity, mission state, inventory with the starting loadout (jet, turret, energy rifle, machete), fallen colonies, and JSON save and load.
+- `scenes/levels/main.tscn` and `main.gd`: test screen showing the game state, with buttons to try points, demotion, spending, a base attack, save and new game.
+- README: Getting started section.
+
+### Notes
+- Rank point thresholds are placeholders (0, 100, 300, 600, 1000, 1600, 2500), to be tuned in Stage 6.
+- Not yet run in Godot. Report any errors from the editor and they will be fixed in the next update.
 
 ## [Stage 0] - 2026-11-26
 
 ### Added
 - Repository skeleton: `autoload/`, `scenes/` (player, weapons, enemies, jet, base, colonies, missions, levels, ui), `scripts/`, `assets/`, `audio/`, `data/`.
 - `README.md` with the logo at the top.
-- Logo: `assets/logo/logo.png` and editable `assets/logo/logo.svg`.
+- Logo: a shield made of honeycomb cells with a lighthouse inside, as `assets/logo/logo.png` and editable `assets/logo/logo.svg`.
 - Godot 4 `.gitignore`.
 - `CHANGELOG.md` and `PROGRESS.md`.
+
+### Design
+- Currency named qubit. The Market sells everything. Raw goods have changing prices, everything else is fixed. Fallen colonies pay less and sell cheaper.
+- Bought items need the matching rank.
+- Starting loadout: jet, turret, 3,500 qubits, gun, sword or machete.
+- First-launch intro story added to the plan.

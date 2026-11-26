@@ -26,6 +26,12 @@ Planning phase. The design is settled and no game code exists yet.
 - Language: GDScript
 - First platform: Android
 
+## Getting started
+
+1. Install Godot 4.3 or newer (standard version, not .NET).
+2. Open Godot, choose Import, and select `project.godot`.
+3. Press F5 to run. The Stage 1 test screen shows rank, qubits and base health, with buttons to try the game state.
+
 ## Project structure
 
 ```
