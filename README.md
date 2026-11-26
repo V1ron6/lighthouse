@@ -30,7 +30,15 @@ Planning phase. The design is settled and no game code exists yet.
 
 1. Install Godot 4.3 or newer (standard version, not .NET).
 2. Open Godot, choose Import, and select `project.godot`.
-3. Press F5 to run. The Stage 1 test screen shows rank, qubits and base health, with buttons to try the game state.
+3. Press F5 to run. The test screen shows rank, qubits and base health, with buttons to try the game state, and a **Start test arena** button.
+
+### Controls
+
+| | Desktop | Phone |
+| --- | --- | --- |
+| Move | WASD | Left thumb joystick (appears where you touch) |
+| Look | Mouse (click to capture, Esc to release) | Drag on the right side |
+| Fire | Left click or Space | Fire button, bottom right |
 
 ## Project structure
 

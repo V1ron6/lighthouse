@@ -5,6 +5,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [Stage 2] - 2026-11-26
+
+### Added
+- `scenes/player/player.tscn` and `player.gd`: first-person player with gravity, WASD and mouse look on desktop, and a placeholder hitscan shot (25 damage, 0.15s between shots).
+- `scenes/ui/touch_controls.tscn` and `touch_controls.gd`: floating move joystick on the left, drag-to-look on the right, fire button bottom right, crosshair. Shown automatically on touchscreens.
+- `scenes/levels/test_arena.tscn` and `test_arena.gd`: floor, walls, glowing cover, five practice targets, HUD with rank and qubits, and a Back button.
+- `scenes/levels/target.gd`: shootable target that flashes when hit and respawns after 2 seconds.
+- "Start test arena" button on the main test screen.
+- README: Controls table.
+
+### Notes
+- The shot is a placeholder. The real energy rifle comes in Stage 3.
+- Input actions (move, fire) are registered in code, so `project.godot` is unchanged.
+- Not yet run in Godot. Report any errors from the editor and they will be fixed in the next update.
+
 ## [Stage 1] - 2026-11-26
 
 ### Added

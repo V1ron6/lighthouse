@@ -2,14 +2,14 @@
 
 Lighthouse is built in stages. After each stage this file and `CHANGELOG.md` are updated and a full project zip is delivered.
 
-**Current stage:** Stage 1 complete. Next: Stage 2.
+**Current stage:** Stage 2 complete. Next: Stage 3.
 
 | Stage | Goal | Status |
 | --- | --- | --- |
 | 0 | Repo skeleton, README with logo, shield logo, changelog, progress file | Done |
 | 1 | Godot project file, Mobile renderer, `game_manager` and `event_bus` autoloads, test screen | Done (untested in Godot) |
-| 2 | Test arena: first-person player, touch joystick and aim area, fire button | Next |
-| 3 | Energy rifle and the first enemy (scout) with basic AI | Planned |
+| 2 | Test arena: first-person player, touch joystick and aim area, fire button | Done (untested in Godot) |
+| 3 | Energy rifle and the first enemy (scout) with basic AI | Next |
 | 4 | Lighthouse base scene, power core and wave defence | Planned |
 | 5 | Missions and the base-attack choice (defend or continue) | Planned |
 | 6 | Rank, points, demotion and rank unlocks | Planned |

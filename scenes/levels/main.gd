@@ -1,5 +1,5 @@
 extends Control
-## Stage 1 test screen. Shows the game state and has buttons to try the
+## Test screen. Shows the game state and has buttons to try the
 ## autoloads. Replaced by the real menu and test arena in later stages.
 
 var _label: Label
@@ -18,6 +18,7 @@ func _ready() -> void:
 	_label.add_theme_font_size_override("font_size", 30)
 	box.add_child(_label)
 
+	_add_button(box, "Start test arena", func(): get_tree().change_scene_to_file("res://scenes/levels/test_arena.tscn"))
 	_add_button(box, "+100 points", func(): GameManager.add_points(100))
 	_add_button(box, "-100 points (demotion test)", func(): GameManager.remove_points(100))
 	_add_button(box, "Spend 500 qubits", func(): GameManager.spend_qubits(500))
@@ -47,7 +48,7 @@ func _add_button(parent: Node, text: String, action: Callable) -> void:
 
 
 func _refresh(_a: Variant = null, _b: Variant = null) -> void:
-	_label.text = "LIGHTHOUSE  |  Stage 1\nRank: %s  (%d pts, %d to next)\nQubits: %d\nBase: %d/%d   Core: %d/%d" % [
+	_label.text = "LIGHTHOUSE  |  Stage 2\nRank: %s  (%d pts, %d to next)\nQubits: %d\nBase: %d/%d   Core: %d/%d" % [
 		GameManager.get_rank_name(),
 		GameManager.points,
 		GameManager.points_to_next_rank(),
