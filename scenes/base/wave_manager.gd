@@ -1,9 +1,12 @@
 extends Node
 ## Spawns scouts in waves around the edge of the map.
-## Wave n has 4 + 2 * (n - 1) scouts, at most 8 alive at once.
+## Wave n has 4 + 2 * (n - 1) aliens, at most 8 alive at once.
+## Waves 1 and 2 are all scouts. From wave 3, soldiers join: 15% more of the wave each
+## wave, up to 60%.
 ## Short break between waves. Waves keep coming until the core falls.
 
 const ScoutScript := preload("res://scenes/enemies/scout.gd")
+const SoldierScript := preload("res://scenes/enemies/soldier.gd")
 
 const FIRST_WAVE_DELAY := 4.0
 const INTERMISSION := 8.0
@@ -42,7 +45,7 @@ func _process(delta: float) -> void:
 	if _to_spawn > 0:
 		_spawn_timer -= delta
 		if _spawn_timer <= 0.0 and alive < MAX_ALIVE:
-			_spawn_scout()
+			_spawn_enemy()
 			_spawn_timer = SPAWN_INTERVAL
 	elif alive == 0:
 		_active = false
@@ -73,8 +76,9 @@ func _start_wave() -> void:
 	EventBus.wave_started.emit(wave)
 
 
-func _spawn_scout() -> void:
-	var scout: CharacterBody3D = ScoutScript.new()
+func _spawn_enemy() -> void:
+	var soldier_chance := clampf((wave - 2) * 0.15, 0.0, 0.6)
+	var scout: CharacterBody3D = SoldierScript.new() if randf() < soldier_chance else ScoutScript.new()
 	var angle := randf() * TAU
 	scout.position = Vector3(cos(angle) * SPAWN_RADIUS, 0.2, sin(angle) * SPAWN_RADIUS)
 	enemy_parent.add_child(scout)

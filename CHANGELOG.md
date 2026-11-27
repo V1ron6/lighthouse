@@ -5,6 +5,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [Stage 8] - 2026-11-27
+
+Hangar and jet moved to Stage 9 so the alien AI could come first.
+
+### Added
+- `scenes/enemies/soldier.gd`: a ranged alien with a decision loop (advance, engage, flank, retreat, regroup) that thinks every 0.4s.
+  - Tactical (intelligence 1): holds range, strafes, shoots, retreats to heal below 30% health.
+  - Cunning (intelligence 2, when the player is Sentinel or higher): flanks when it has allies, shoots while retreating, judges the whole fight (allies, turrets and player as threats, recent losses) and pulls back early when it is going badly. Comes back when healed or reinforced. At most two retreats each.
+  - Uses line of sight, and a cunning soldier that cannot see a hiding player attacks the lighthouse.
+- Turrets join the `turrets` group so aliens can count them as threats.
+
+### Changed
+- Wave manager mixes in soldiers from wave 3. Missions mix them in after 3 kills, more often on riskier missions.
+- Scouts are unchanged: pure instinct.
+
 ## [Stage 7] - 2026-11-27
 
 ### Added

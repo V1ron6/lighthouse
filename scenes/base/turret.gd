@@ -14,6 +14,7 @@ var _cooldown := 0.0
 
 
 func _ready() -> void:
+	add_to_group("turrets")
 	var shape := CollisionShape3D.new()
 	var cylinder := CylinderShape3D.new()
 	cylinder.radius = 0.5

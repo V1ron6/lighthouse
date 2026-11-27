@@ -14,9 +14,10 @@ Lighthouse is built in stages. After each stage this file and `CHANGELOG.md` are
 | 5 | Missions and the base-attack choice (defend or continue) | Done (untested in Godot) |
 | 6 | Rank unlocks for weapons and defences, rank display, Armoury screen | Done (untested in Godot) |
 | 7 | Qubits, automated colony trade and the Market screen | Done (untested in Godot) |
-| 8 | Hangar and fighter jet with touch flight controls | Next |
-| 9 | Ten colonies, fall and retake, radio story, first-launch intro story | Planned |
-| 10 | More enemies and weapons, base defences, polish, Android export | Planned |
+| 8 | Smarter aliens: soldier with a thinking AI (flank, retreat, regroup), scaled by player rank | Done (untested in Godot) |
+| 9 | Hangar and fighter jet with touch flight controls | Next |
+| 10 | Ten colonies, fall and retake, radio story, first-launch intro story | Planned |
+| 11 | More enemies (heavy, flyer, Mothership) with the same brain, more weapons, polish, Android export | Planned |
 
 ## Decisions so far
 
@@ -37,10 +38,13 @@ Lighthouse is built in stages. After each stage this file and `CHANGELOG.md` are
 - Rank gating: every item has a minimum rank (`data/item_data.gd`). Turret slots = 1 + rank index, so a higher rank runs more turrets (the base scene has 4 spots for now).
 - Market: sells everything. Raw goods (ammo, fuel, supplies) change price after each mission (within 50% to 150% of base); other items are fixed. Selling returns 50% of the price. Fallen colonies pay 70% of that and charge 80% when you buy.
 - Auto trades: up to 6 orders (auto-buy or auto-sell one unit each), run after every mission with the colony chosen when the order was set.
+- Alien intelligence: scouts are instinct only (swarm, never retreat). Soldiers think: tactical (hold range, strafe, shoot, fall back to heal when under 30% health) and, from player rank Sentinel, cunning (flank with allies, shoot while retreating, retreat early when allies are few, threats many or comrades are dying). Soldiers retreat at most twice. Later enemy types get higher intelligence.
+- Waves 1 and 2 are scouts only. Soldiers join from wave 3 (15% per wave, up to 60%). In missions, soldiers appear after the first 3 kills, 15% chance per risk level.
 
 ## Open items
 
 - Rank thresholds, item prices and unlock ranks are placeholders. Tune after playtesting.
 - The machete has no melee code yet.
+- Alien AI numbers (retreat thresholds, ranges, accuracy, soldier share) are untested guesses. Report how fights feel.
 - Colonies cannot fall yet (Stage 9), so the fallen-colony prices are in place but unused. Raw goods are tradable but nothing consumes them yet.
 - Only 4 turret spots exist in the base scene, but slots reach 7 at the top rank.

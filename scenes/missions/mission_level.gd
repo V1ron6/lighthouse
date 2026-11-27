@@ -1,5 +1,5 @@
 extends Node3D
-## A mission away from the base. Eliminate the required number of scouts.
+## A mission away from the base. Eliminate the required number of aliens.
 ## The base may be attacked while you are out. When that happens the game
 ## pauses and the player must pick: defend the base (mission lost) or carry
 ## on (the base fends for itself and the player loses rank points).
@@ -7,6 +7,7 @@ extends Node3D
 const PlayerScene := preload("res://scenes/player/player.tscn")
 const HudScript := preload("res://scenes/ui/game_hud.gd")
 const ScoutScript := preload("res://scenes/enemies/scout.gd")
+const SoldierScript := preload("res://scenes/enemies/soldier.gd")
 const Builder := preload("res://scripts/level_builder.gd")
 const MissionData := preload("res://data/mission_data.gd")
 
@@ -73,7 +74,7 @@ func _process(delta: float) -> void:
 		_attack_pending = false
 		_trigger_attack()
 
-	_hud.set_status("Objective: eliminate scouts %d/%d\nBase %d/%d   Core %d/%d" % [
+	_hud.set_status("Objective: eliminate aliens %d/%d\nBase %d/%d   Core %d/%d" % [
 		_kills, int(_mission["kills"]),
 		GameManager.base_health, GameManager.MAX_BASE_HEALTH,
 		GameManager.core_integrity, GameManager.MAX_CORE_INTEGRITY,
@@ -93,7 +94,9 @@ func _build_cover() -> void:
 
 
 func _spawn_scout() -> void:
-	var scout: CharacterBody3D = ScoutScript.new()
+	# Riskier missions field more thinking aliens, but never in the first few kills.
+	var soldier_chance := 0.0 if _kills < 3 else 0.15 * int(_mission["risk"])
+	var scout: CharacterBody3D = SoldierScript.new() if randf() < soldier_chance else ScoutScript.new()
 	var angle := randf() * TAU
 	var spawn: Vector3 = _player.global_position + Vector3(cos(angle), 0.0, sin(angle)) * SPAWN_DISTANCE
 	var limit := FIELD_SIZE / 2.0 - 2.0
