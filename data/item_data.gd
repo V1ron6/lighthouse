@@ -19,9 +19,22 @@ const ITEMS := {
 	"fighter_jet": {"name": "Fighter jet", "type": "vehicle", "min_rank": 0, "price": 3000},
 	"interceptor": {"name": "Interceptor jet", "type": "vehicle", "min_rank": 2, "price": 7000},
 	"gunship": {"name": "Gunship", "type": "vehicle", "min_rank": 4, "price": 15000},
+
+	# Raw goods. Their prices change over time (see GameManager.roll_prices).
+	"ammo": {"name": "Ammo crate", "type": "raw", "min_rank": 0, "price": 20},
+	"fuel": {"name": "Fuel cell", "type": "raw", "min_rank": 0, "price": 35},
+	"supplies": {"name": "Supply pack", "type": "raw", "min_rank": 0, "price": 25},
 }
 
 const TYPE_ORDER: Array[String] = ["weapon", "defence", "vehicle"]
+
+
+static func base_price(item_id: String) -> int:
+	return ITEMS.get(item_id, {}).get("price", 0)
+
+
+static func is_raw(item_id: String) -> bool:
+	return ITEMS.get(item_id, {}).get("type", "") == "raw"
 
 
 static func exists(item_id: String) -> bool:

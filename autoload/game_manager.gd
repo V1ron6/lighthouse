@@ -4,6 +4,7 @@ extends Node
 ## Other scenes read from here and listen to EventBus for changes.
 
 const ItemData := preload("res://data/item_data.gd")
+const ColonyData := preload("res://data/colony_data.gd")
 
 enum MissionState { NONE, ACTIVE, BASE_UNDER_ATTACK, COMPLETE, FAILED, ABANDONED }
 
@@ -25,6 +26,13 @@ const DEFENDED_PER_TURRET := 4
 const DAMAGE_PER_LEAKED := 60
 ## Turrets the lighthouse can run at once: this plus one per rank.
 const BASE_TURRET_SLOTS := 1
+## Market. Selling returns this share of the price. Fallen colonies pay less and charge less.
+const SELL_SHARE := 0.5
+const FALLEN_SELL_FACTOR := 0.7
+const FALLEN_BUY_FACTOR := 0.8
+const MAX_TRADE_ORDERS := 6
+## Raw goods prices move by up to this much each roll, within 50% to 150% of base.
+const PRICE_SWING := 0.15
 ## Rank points lost for leaving the base: a flat part plus a part per leaked attacker.
 const PENALTY_BASE := 10
 const PENALTY_PER_LEAKED := 12
@@ -54,11 +62,18 @@ var fallen_colonies: Array[String] = []
 var has_seen_intro: bool = false
 ## Set when the player chose to defend the base. Read by the base defence level.
 var pending_attack: Dictionary = {}
+## Current prices of raw goods: item_id -> qubits.
+var raw_prices: Dictionary = {}
+## Automated trades: item_id -> {"mode": "buy" or "sell", "colony": colony_id}.
+## One unit of each is traded per trade cycle (after every mission).
+var trade_orders: Dictionary = {}
+var last_trade_log: Array[String] = []
 
 
 func _ready() -> void:
 	new_game()
 	load_game()
+	EventBus.mission_completed.connect(func(_id, _ok): run_trade_cycle())
 
 
 # --- New game / reset ---
@@ -75,6 +90,9 @@ func new_game() -> void:
 	fallen_colonies.clear()
 	has_seen_intro = false
 	pending_attack = {}
+	trade_orders = {}
+	last_trade_log.clear()
+	_reset_prices()
 	_emit_all()
 
 
@@ -281,6 +299,95 @@ func abandon_mission() -> void:
 	EventBus.mission_abandoned.emit(abandoned_id)
 
 
+# --- Market ---
+
+func _reset_prices() -> void:
+	raw_prices = {}
+	for id in ItemData.ITEMS:
+		if ItemData.is_raw(id):
+			raw_prices[id] = ItemData.base_price(id)
+
+
+func current_price(item_id: String) -> int:
+	if ItemData.is_raw(item_id):
+		return int(raw_prices.get(item_id, ItemData.base_price(item_id)))
+	return ItemData.base_price(item_id)
+
+
+## Nudges every raw good price up or down.
+func roll_prices() -> void:
+	for id in raw_prices:
+		var base := ItemData.base_price(id)
+		var moved := roundi(raw_prices[id] * randf_range(1.0 - PRICE_SWING, 1.0 + PRICE_SWING))
+		raw_prices[id] = clampi(moved, roundi(base * 0.5), roundi(base * 1.5))
+
+
+func buy_price(item_id: String, colony_id: String) -> int:
+	var factor := FALLEN_BUY_FACTOR if colony_id in fallen_colonies else 1.0
+	return maxi(1, roundi(current_price(item_id) * factor))
+
+
+func sell_price(item_id: String, colony_id: String) -> int:
+	var factor := FALLEN_SELL_FACTOR if colony_id in fallen_colonies else 1.0
+	return maxi(1, roundi(current_price(item_id) * SELL_SHARE * factor))
+
+
+## False if unknown item or not enough qubits.
+func buy_item(item_id: String, colony_id: String) -> bool:
+	if not ItemData.exists(item_id):
+		return false
+	var price := buy_price(item_id, colony_id)
+	if not spend_qubits(price):
+		return false
+	add_item(item_id)
+	EventBus.item_purchased.emit(item_id, price)
+	return true
+
+
+## False if the player does not own the item.
+func sell_item(item_id: String, colony_id: String) -> bool:
+	if not ItemData.exists(item_id) or not has_item(item_id):
+		return false
+	var price := sell_price(item_id, colony_id)
+	remove_item(item_id)
+	add_qubits(price)
+	EventBus.item_sold.emit(item_id, price)
+	return true
+
+
+## Sets, changes or (mode "") removes an automated trade. False if the order list is full.
+func set_trade_order(item_id: String, mode: String, colony_id: String) -> bool:
+	if mode == "":
+		trade_orders.erase(item_id)
+		return true
+	if not trade_orders.has(item_id) and trade_orders.size() >= MAX_TRADE_ORDERS:
+		return false
+	trade_orders[item_id] = {"mode": mode, "colony": colony_id}
+	return true
+
+
+## Runs every automated trade once and moves raw prices. Called after each mission.
+func run_trade_cycle() -> void:
+	last_trade_log.clear()
+	for id in trade_orders:
+		var order: Dictionary = trade_orders[id]
+		var colony_name := ColonyData.colony_name(order["colony"])
+		var item_name := ItemData.item_name(id)
+		if order["mode"] == "buy":
+			var price := buy_price(id, order["colony"])
+			if buy_item(id, order["colony"]):
+				last_trade_log.append("Bought %s from %s for %d" % [item_name, colony_name, price])
+			else:
+				last_trade_log.append("Could not buy %s (not enough qubits)" % item_name)
+		else:
+			var price := sell_price(id, order["colony"])
+			if sell_item(id, order["colony"]):
+				last_trade_log.append("Sold %s to %s for %d" % [item_name, colony_name, price])
+			else:
+				last_trade_log.append("Could not sell %s (none owned)" % item_name)
+	roll_prices()
+
+
 # --- Inventory ---
 
 func has_item(item_id: String) -> bool:
@@ -330,6 +437,8 @@ func save_game() -> void:
 		"inventory": inventory,
 		"fallen_colonies": fallen_colonies,
 		"has_seen_intro": has_seen_intro,
+		"raw_prices": raw_prices,
+		"trade_orders": trade_orders,
 	}
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file == null:
@@ -364,6 +473,19 @@ func load_game() -> bool:
 	if typeof(saved_fallen) == TYPE_ARRAY:
 		for colony in saved_fallen:
 			fallen_colonies.append(str(colony))
+	_reset_prices()
+	var saved_prices: Variant = data.get("raw_prices", {})
+	if typeof(saved_prices) == TYPE_DICTIONARY:
+		for key in saved_prices:
+			if raw_prices.has(str(key)):
+				raw_prices[str(key)] = int(saved_prices[key])
+	trade_orders = {}
+	var saved_orders: Variant = data.get("trade_orders", {})
+	if typeof(saved_orders) == TYPE_DICTIONARY:
+		for key in saved_orders:
+			var order: Variant = saved_orders[key]
+			if typeof(order) == TYPE_DICTIONARY and ItemData.exists(str(key)):
+				trade_orders[str(key)] = {"mode": str(order.get("mode", "buy")), "colony": str(order.get("colony", "ashgrove"))}
 	rank_index = 0
 	_update_rank()
 	_emit_all()

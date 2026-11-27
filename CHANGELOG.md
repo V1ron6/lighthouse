@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [Stage 7] - 2026-11-27
+
+### Added
+- `data/colony_data.gd`: the ten colonies (Ashgrove, Northreach, Helix Point, Dunmore, Sable Bay, Ironvale, Kestrel Hold, Lumen Reach, Tidewater, Vantage).
+- Raw goods in `data/item_data.gd`: ammo, fuel, supplies, with changing prices.
+- `scenes/ui/market.tscn`: pick a colony, buy and sell any item, and set automated trades (off, auto-buy, auto-sell). Shows prices, owned count and the rank needed to use each item.
+- `GameManager`: `buy_item`, `sell_item`, `buy_price`, `sell_price`, `current_price`, `roll_prices`, `set_trade_order`, `run_trade_cycle`. Trades run after every mission. Prices and orders are saved.
+- Fallen colonies pay 70% of the sell value and charge 80% on purchases.
+
+### Changed
+- Hub has a Market button and says Stage 7.
+
 ## [Stage 6] - 2026-11-27
 
 ### Added

@@ -13,8 +13,8 @@ Lighthouse is built in stages. After each stage this file and `CHANGELOG.md` are
 | 4 | Lighthouse base scene, power core and wave defence | Done (untested in Godot) |
 | 5 | Missions and the base-attack choice (defend or continue) | Done (untested in Godot) |
 | 6 | Rank unlocks for weapons and defences, rank display, Armoury screen | Done (untested in Godot) |
-| 7 | Qubits, automated colony trade and the Market screen | Next |
-| 8 | Hangar and fighter jet with touch flight controls | Planned |
+| 7 | Qubits, automated colony trade and the Market screen | Done (untested in Godot) |
+| 8 | Hangar and fighter jet with touch flight controls | Next |
 | 9 | Ten colonies, fall and retake, radio story, first-launch intro story | Planned |
 | 10 | More enemies and weapons, base defences, polish, Android export | Planned |
 
@@ -35,9 +35,12 @@ Lighthouse is built in stages. After each stage this file and `CHANGELOG.md` are
 - Base attack during a mission: defend (mission reward lost, repel the attack for points) or carry on (each turret stops 4 attackers, the rest do 60 damage each to the base then core, and cost 10 + 12 per leaked attacker in rank points).
 - Rank points come from completed missions and repelled attacks. Base damage persists until repaired with qubits.
 - Rank gating: every item has a minimum rank (`data/item_data.gd`). Turret slots = 1 + rank index, so a higher rank runs more turrets (the base scene has 4 spots for now).
+- Market: sells everything. Raw goods (ammo, fuel, supplies) change price after each mission (within 50% to 150% of base); other items are fixed. Selling returns 50% of the price. Fallen colonies pay 70% of that and charge 80% when you buy.
+- Auto trades: up to 6 orders (auto-buy or auto-sell one unit each), run after every mission with the colony chosen when the order was set.
 
 ## Open items
 
 - Rank thresholds, item prices and unlock ranks are placeholders. Tune after playtesting.
 - The machete has no melee code yet.
+- Colonies cannot fall yet (Stage 9), so the fallen-colony prices are in place but unused. Raw goods are tradable but nothing consumes them yet.
 - Only 4 turret spots exist in the base scene, but slots reach 7 at the top rank.
