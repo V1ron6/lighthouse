@@ -79,6 +79,7 @@ func _ready() -> void:
 	EventBus.qubits_changed.connect(_refresh_info)
 	EventBus.points_changed.connect(_refresh_info)
 	EventBus.rank_changed.connect(_refresh_info)
+	EventBus.rank_changed.connect(_on_rank_changed)
 	_refresh_info()
 
 
@@ -157,7 +158,14 @@ func _make_button(text: String, action: Callable) -> Button:
 
 
 func _refresh_info(_a: Variant = null, _b: Variant = null) -> void:
-	_info.text = "%s   |   %d qubits" % [GameManager.get_rank_name(), GameManager.qubits]
+	var to_next := GameManager.points_to_next_rank()
+	var progress := "MAX" if to_next == 0 else "%d to next" % to_next
+	_info.text = "%s (%s)   |   %d qubits" % [GameManager.get_rank_name(), progress, GameManager.qubits]
+
+
+func _on_rank_changed(new_index: int, old_index: int) -> void:
+	var word := "PROMOTED" if new_index > old_index else "DEMOTED"
+	show_banner("%s: %s" % [word, GameManager.RANK_NAMES[new_index]], 3.0)
 
 
 func _on_player_health_changed(current: int, maximum: int) -> void:

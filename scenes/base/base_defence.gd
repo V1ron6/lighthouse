@@ -128,7 +128,7 @@ func _add_wall(pos: Vector3, wall_size: Vector3) -> void:
 
 
 func _build_turrets() -> void:
-	var owned: int = GameManager.inventory.get("turret", 0)
+	var owned: int = GameManager.usable_turrets()
 	for i in mini(owned, TURRET_SPOTS.size()):
 		var turret: StaticBody3D = TurretScript.new()
 		turret.position = TURRET_SPOTS[i]

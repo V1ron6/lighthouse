@@ -3,6 +3,8 @@ extends Node
 ## Tracks qubits, points and rank, base health, mission state and inventory.
 ## Other scenes read from here and listen to EventBus for changes.
 
+const ItemData := preload("res://data/item_data.gd")
+
 enum MissionState { NONE, ACTIVE, BASE_UNDER_ATTACK, COMPLETE, FAILED, ABANDONED }
 
 const SAVE_PATH := "user://lighthouse_save.json"
@@ -14,13 +16,15 @@ const MAX_CORE_INTEGRITY := 1000
 const RANK_NAMES: Array[String] = [
 	"Recruit", "Cadet", "Operative", "Sentinel", "Warden", "Commander", "Keeper of the Light",
 ]
-## Points needed to reach each rank. Placeholder values, to be tuned in Stage 6.
+## Points needed to reach each rank. Still placeholders: tune after playtesting.
 const RANK_THRESHOLDS: Array[int] = [0, 100, 300, 600, 1000, 1600, 2500]
 
 ## Base attack while the player is away on a mission (they chose to continue).
 ## Each turret stops this many attackers. The rest damage the base.
 const DEFENDED_PER_TURRET := 4
 const DAMAGE_PER_LEAKED := 60
+## Turrets the lighthouse can run at once: this plus one per rank.
+const BASE_TURRET_SLOTS := 1
 ## Rank points lost for leaving the base: a flat part plus a part per leaked attacker.
 const PENALTY_BASE := 10
 const PENALTY_PER_LEAKED := 12
@@ -122,6 +126,29 @@ func points_to_next_rank() -> int:
 	return RANK_THRESHOLDS[rank_index + 1] - points
 
 
+## Points still needed for the next rank as a 0..1 fraction of this rank's span.
+func rank_progress() -> float:
+	if rank_index >= RANK_NAMES.size() - 1:
+		return 1.0
+	var low := RANK_THRESHOLDS[rank_index]
+	var high := RANK_THRESHOLDS[rank_index + 1]
+	return clampf(float(points - low) / float(high - low), 0.0, 1.0)
+
+
+## True if the player owns the item and has the rank to use it.
+func can_use(item_id: String) -> bool:
+	return has_item(item_id) and rank_index >= ItemData.min_rank(item_id)
+
+
+## Turrets the lighthouse can run: owned, capped by rank.
+func usable_turrets() -> int:
+	return mini(inventory.get("turret", 0), max_turrets())
+
+
+func max_turrets() -> int:
+	return BASE_TURRET_SLOTS + rank_index
+
+
 func _update_rank() -> void:
 	var new_index := 0
 	for i in RANK_THRESHOLDS.size():
@@ -186,7 +213,7 @@ func trigger_base_attack(strength: int) -> void:
 ## What would happen if the player carried on with the mission while the base
 ## is attacked by `strength` enemies. Changes nothing.
 func preview_unattended_attack(strength: int) -> Dictionary:
-	var turrets: int = inventory.get("turret", 0)
+	var turrets: int = usable_turrets()
 	var defended := turrets * DEFENDED_PER_TURRET
 	var leaked := maxi(0, strength - defended)
 	var raw_damage := leaked * DAMAGE_PER_LEAKED

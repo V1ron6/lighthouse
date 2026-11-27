@@ -12,8 +12,8 @@ Lighthouse is built in stages. After each stage this file and `CHANGELOG.md` are
 | 3 | Energy rifle and the first enemy (scout) with basic AI | Done (untested in Godot) |
 | 4 | Lighthouse base scene, power core and wave defence | Done (untested in Godot) |
 | 5 | Missions and the base-attack choice (defend or continue) | Done (untested in Godot) |
-| 6 | Rank unlocks for weapons and defences, rank display, point tuning (points and demotion already work) | Next |
-| 7 | Qubits, automated colony trade and the Market screen | Planned |
+| 6 | Rank unlocks for weapons and defences, rank display, Armoury screen | Done (untested in Godot) |
+| 7 | Qubits, automated colony trade and the Market screen | Next |
 | 8 | Hangar and fighter jet with touch flight controls | Planned |
 | 9 | Ten colonies, fall and retake, radio story, first-launch intro story | Planned |
 | 10 | More enemies and weapons, base defences, polish, Android export | Planned |
@@ -34,7 +34,10 @@ Lighthouse is built in stages. After each stage this file and `CHANGELOG.md` are
 - Attacks on the lighthouse hit base health first, then the power core. Core at 0 is game over.
 - Base attack during a mission: defend (mission reward lost, repel the attack for points) or carry on (each turret stops 4 attackers, the rest do 60 damage each to the base then core, and cost 10 + 12 per leaked attacker in rank points).
 - Rank points come from completed missions and repelled attacks. Base damage persists until repaired with qubits.
+- Rank gating: every item has a minimum rank (`data/item_data.gd`). Turret slots = 1 + rank index, so a higher rank runs more turrets (the base scene has 4 spots for now).
 
 ## Open items
 
-None right now.
+- Rank thresholds, item prices and unlock ranks are placeholders. Tune after playtesting.
+- The machete has no melee code yet.
+- Only 4 turret spots exist in the base scene, but slots reach 7 at the top rank.

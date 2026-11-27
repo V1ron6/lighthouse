@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [Stage 6] - 2026-11-27
+
+### Added
+- `data/item_data.gd`: 13 items (weapons, lighthouse defences, vehicles) with a minimum rank and a fixed price each.
+- `scenes/ui/armoury.tscn`: lists every item by type, showing owned, unlocked or locked (with the rank needed). Opened from the hub.
+- `GameManager`: `can_use`, `usable_turrets`, `max_turrets` (1 + rank index), `rank_progress`.
+- HUD shows points to the next rank and a PROMOTED or DEMOTED banner when the rank changes.
+
+### Changed
+- Turrets in the base defence and the carry-on calculation are capped by rank slots.
+- Hub label shows turret slots and says Stage 6.
+
 ## [Stage 5] - 2026-11-27
 
 ### Added

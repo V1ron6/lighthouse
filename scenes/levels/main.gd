@@ -19,6 +19,7 @@ func _ready() -> void:
 	box.add_child(_label)
 
 	_add_button(box, "Missions", func(): get_tree().change_scene_to_file("res://scenes/missions/mission_select.tscn"))
+	_add_button(box, "Armoury", func(): get_tree().change_scene_to_file("res://scenes/ui/armoury.tscn"))
 	_add_button(box, "Defend the lighthouse", func(): get_tree().change_scene_to_file("res://scenes/base/base_defence.tscn"))
 	_add_button(box, "Start test arena", func(): get_tree().change_scene_to_file("res://scenes/levels/test_arena.tscn"))
 	_add_button(box, "+100 points", func(): GameManager.add_points(100))
@@ -50,11 +51,12 @@ func _add_button(parent: Node, text: String, action: Callable) -> void:
 
 
 func _refresh(_a: Variant = null, _b: Variant = null) -> void:
-	_label.text = "LIGHTHOUSE  |  Stage 5\nRank: %s  (%d pts, %d to next)\nQubits: %d\nBase: %d/%d   Core: %d/%d" % [
+	_label.text = "LIGHTHOUSE  |  Stage 6\nRank: %s  (%d pts, %d to next)\nQubits: %d   Turret slots: %d\nBase: %d/%d   Core: %d/%d" % [
 		GameManager.get_rank_name(),
 		GameManager.points,
 		GameManager.points_to_next_rank(),
 		GameManager.qubits,
+		GameManager.max_turrets(),
 		GameManager.base_health,
 		GameManager.MAX_BASE_HEALTH,
 		GameManager.core_integrity,
