@@ -17,6 +17,19 @@ const RANK_NAMES: Array[String] = [
 ## Points needed to reach each rank. Placeholder values, to be tuned in Stage 6.
 const RANK_THRESHOLDS: Array[int] = [0, 100, 300, 600, 1000, 1600, 2500]
 
+## Base attack while the player is away on a mission (they chose to continue).
+## Each turret stops this many attackers. The rest damage the base.
+const DEFENDED_PER_TURRET := 4
+const DAMAGE_PER_LEAKED := 60
+## Rank points lost for leaving the base: a flat part plus a part per leaked attacker.
+const PENALTY_BASE := 10
+const PENALTY_PER_LEAKED := 12
+## Points for repelling a base attack by hand: base plus 2 per attacker.
+const DEFEND_POINTS_BASE := 25
+## Repair prices, in qubits per hit point.
+const BASE_REPAIR_HP_PER_QUBIT := 5.0
+const CORE_REPAIR_HP_PER_QUBIT := 2.0
+
 ## What the player owns at the start of a new game.
 const STARTING_INVENTORY := {
 	"fighter_jet": 1,
@@ -35,6 +48,8 @@ var current_mission_id: String = ""
 var inventory: Dictionary = {}
 var fallen_colonies: Array[String] = []
 var has_seen_intro: bool = false
+## Set when the player chose to defend the base. Read by the base defence level.
+var pending_attack: Dictionary = {}
 
 
 func _ready() -> void:
@@ -55,6 +70,7 @@ func new_game() -> void:
 	inventory = STARTING_INVENTORY.duplicate()
 	fallen_colonies.clear()
 	has_seen_intro = false
+	pending_attack = {}
 	_emit_all()
 
 
@@ -165,6 +181,55 @@ func trigger_base_attack(strength: int) -> void:
 	if mission_state == MissionState.ACTIVE:
 		mission_state = MissionState.BASE_UNDER_ATTACK
 	EventBus.base_attacked.emit(strength)
+
+
+## What would happen if the player carried on with the mission while the base
+## is attacked by `strength` enemies. Changes nothing.
+func preview_unattended_attack(strength: int) -> Dictionary:
+	var turrets: int = inventory.get("turret", 0)
+	var defended := turrets * DEFENDED_PER_TURRET
+	var leaked := maxi(0, strength - defended)
+	var raw_damage := leaked * DAMAGE_PER_LEAKED
+	var base_damage := mini(base_health, raw_damage)
+	return {
+		"turrets": turrets,
+		"defended": mini(defended, strength),
+		"leaked": leaked,
+		"base_damage": base_damage,
+		"core_damage": raw_damage - base_damage,
+		"points_lost": PENALTY_BASE + leaked * PENALTY_PER_LEAKED,
+	}
+
+
+## The player carries on with the mission. The base fends for itself and the
+## player pays the rank penalty. Returns the same dictionary as the preview.
+func resolve_unattended_attack(strength: int) -> Dictionary:
+	var result := preview_unattended_attack(strength)
+	damage_base(result["base_damage"])
+	damage_core(result["core_damage"])
+	remove_points(result["points_lost"])
+	if mission_state == MissionState.BASE_UNDER_ATTACK:
+		mission_state = MissionState.ACTIVE
+	EventBus.base_attack_resolved.emit("continue")
+	return result
+
+
+# --- Repairs ---
+
+func repair_cost() -> int:
+	var base_missing := MAX_BASE_HEALTH - base_health
+	var core_missing := MAX_CORE_INTEGRITY - core_integrity
+	return ceili(base_missing / BASE_REPAIR_HP_PER_QUBIT) + ceili(core_missing / CORE_REPAIR_HP_PER_QUBIT)
+
+
+## Pays for a full repair of the base and core. False if it cannot be afforded.
+func repair_all() -> bool:
+	var cost := repair_cost()
+	if cost == 0 or not spend_qubits(cost):
+		return false
+	repair_base(MAX_BASE_HEALTH)
+	repair_core(MAX_CORE_INTEGRITY)
+	return true
 
 
 # --- Missions ---

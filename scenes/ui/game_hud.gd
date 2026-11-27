@@ -4,7 +4,8 @@ extends CanvasLayer
 ## Keeps working while the game is paused.
 
 signal back_pressed
-signal restart_pressed
+## A button on the centre panel was pressed. Index follows the labels given to show_panel.
+signal panel_choice(index: int)
 
 const TouchScene := preload("res://scenes/ui/touch_controls.tscn")
 
@@ -19,6 +20,7 @@ var _banner: Label
 var _banner_tween: Tween
 var _over_panel: ColorRect
 var _over_label: Label
+var _over_buttons: VBoxContainer
 var _last_health := 100
 
 
@@ -72,7 +74,7 @@ func _ready() -> void:
 	back.offset_bottom = 76.0
 	add_child(back)
 
-	_build_game_over()
+	_build_panel()
 
 	EventBus.qubits_changed.connect(_refresh_info)
 	EventBus.points_changed.connect(_refresh_info)
@@ -102,12 +104,27 @@ func show_banner(text: String, seconds: float = 2.0) -> void:
 
 
 func show_game_over(text: String) -> void:
+	show_panel(text, ["Try again", "Back to menu"])
+
+
+## Centre panel with a message and one button per label. Releases the mouse.
+func show_panel(text: String, labels: Array) -> void:
 	_over_label.text = text
+	for child in _over_buttons.get_children():
+		child.queue_free()
+	for i in labels.size():
+		var index := i
+		_over_buttons.add_child(_make_button(labels[i], func(): _on_panel_button(index)))
 	_over_panel.visible = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
-func _build_game_over() -> void:
+func _on_panel_button(index: int) -> void:
+	_over_panel.visible = false
+	panel_choice.emit(index)
+
+
+func _build_panel() -> void:
 	_over_panel = ColorRect.new()
 	_over_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_over_panel.color = Color(0.0, 0.0, 0.0, 0.7)
@@ -123,10 +140,12 @@ func _build_game_over() -> void:
 
 	_over_label = Label.new()
 	_over_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_over_label.add_theme_font_size_override("font_size", 36)
+	_over_label.add_theme_font_size_override("font_size", 30)
 	box.add_child(_over_label)
-	box.add_child(_make_button("Try again", func(): restart_pressed.emit()))
-	box.add_child(_make_button("Back to menu", func(): back_pressed.emit()))
+
+	_over_buttons = VBoxContainer.new()
+	_over_buttons.add_theme_constant_override("separation", 14)
+	box.add_child(_over_buttons)
 
 
 func _make_button(text: String, action: Callable) -> Button:

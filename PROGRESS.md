@@ -2,7 +2,7 @@
 
 Lighthouse is built in stages. After each stage this file and `CHANGELOG.md` are updated and a full project zip is delivered.
 
-**Current stage:** Stage 4 complete. Next: Stage 5.
+**Current stage:** Stage 5 complete. Next: Stage 6.
 
 | Stage | Goal | Status |
 | --- | --- | --- |
@@ -11,8 +11,8 @@ Lighthouse is built in stages. After each stage this file and `CHANGELOG.md` are
 | 2 | Test arena: first-person player, touch joystick and aim area, fire button | Done (untested in Godot) |
 | 3 | Energy rifle and the first enemy (scout) with basic AI | Done (untested in Godot) |
 | 4 | Lighthouse base scene, power core and wave defence | Done (untested in Godot) |
-| 5 | Missions and the base-attack choice (defend or continue) | Next |
-| 6 | Rank, points, demotion and rank unlocks | Planned |
+| 5 | Missions and the base-attack choice (defend or continue) | Done (untested in Godot) |
+| 6 | Rank unlocks for weapons and defences, rank display, point tuning (points and demotion already work) | Next |
 | 7 | Qubits, automated colony trade and the Market screen | Planned |
 | 8 | Hangar and fighter jet with touch flight controls | Planned |
 | 9 | Ten colonies, fall and retake, radio story, first-launch intro story | Planned |
@@ -32,6 +32,8 @@ Lighthouse is built in stages. After each stage this file and `CHANGELOG.md` are
 - Starting loadout: a jet, a turret, 3,500 qubits, a gun (starter energy rifle) and a sword or machete (new melee weapon).
 - Story is told by radio. Two endings.
 - Attacks on the lighthouse hit base health first, then the power core. Core at 0 is game over.
+- Base attack during a mission: defend (mission reward lost, repel the attack for points) or carry on (each turret stops 4 attackers, the rest do 60 damage each to the base then core, and cost 10 + 12 per leaked attacker in rank points).
+- Rank points come from completed missions and repelled attacks. Base damage persists until repaired with qubits.
 
 ## Open items
 

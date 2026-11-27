@@ -44,6 +44,15 @@ Planning phase. The design is settled and no game code exists yet.
 
 Scouts spawn around the edge and rush you. Each takes two rifle hits. The rifle builds heat as you fire (bar at the top), locks if it overheats, and recovers once cooled. Scouts bite for 10 damage. At 0 health you respawn at the start.
 
+### Missions
+
+Press **Missions**. Pick a mission and eliminate the required scouts. While you are out, the base may be attacked. The game pauses and you choose:
+
+- **Defend the base:** the mission is abandoned and its reward is lost. You fight off the attackers at the lighthouse and earn points for repelling them.
+- **Carry on:** your turrets stop some of the attackers (4 per turret). The rest damage the base, then the core, and you lose rank points.
+
+Rewards (qubits and points) are paid on completion. Missions need a minimum rank. Damage to the base stays until you repair it from the mission screen.
+
 ### Defend the lighthouse
 
 Press **Defend the lighthouse** on the test screen. Waves of scouts attack the tower. Damage hits the base health first, then the power core. If the core reaches 0 it is game over. A turret from your starting loadout helps. Between waves the base is repaired a little.

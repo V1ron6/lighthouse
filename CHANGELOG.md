@@ -5,6 +5,30 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [Stage 5] - 2026-11-27
+
+### Added
+- `data/mission_data.gd`: three starter missions (Perimeter sweep, Nest raid, Deep strike) with kills, risk, minimum rank, rewards, and base-attack chance, timing and strength.
+- `scenes/missions/mission_select.tscn`: mission list showing rewards and risk, locked missions with the rank they need, base and core status, and a repair button (1 qubit per 5 base health, 1 qubit per 2 core integrity).
+- `scenes/missions/mission_level.tscn`: a field mission. Scouts spawn around you until you have eliminated the required number. Complete pays qubits and points. Dying fails the mission.
+- The base-attack choice. At a random time (chance depends on the mission) the game pauses with the attack strength and what each option costs.
+  - Defend the base: mission abandoned, reward lost, you fight a single wave of attackers at the lighthouse. Repelling it earns 25 points plus 2 per attacker.
+  - Carry on: each turret stops 4 attackers, every other attacker does 60 damage to the base (then core) and costs 12 rank points, plus a flat 10. If the core falls the lighthouse is rebuilt and the mission fails.
+- `GameManager`: `preview_unattended_attack`, `resolve_unattended_attack`, `repair_cost`, `repair_all`, `pending_attack`, and the tuning constants for all of the above.
+- `scripts/level_builder.gd`: shared environment, ground and box helpers.
+- Wave manager `single_wave` and `wave_size_override` options.
+- Progress is saved when a mission ends or an attack is repelled.
+- "Missions" button on the main test screen.
+
+### Changed
+- The HUD centre panel is now generic: `show_panel(text, labels)` and a `panel_choice(index)` signal replace the old restart signal.
+- The defence level has an attack mode (one wave, base health carried over) alongside the endless mode.
+
+### Notes
+- Rank points and demotion now flow from missions. Stage 6 adds the rank unlocks.
+- The test arena and defence level still build their own floors. They can move to the level builder later.
+- Not yet run in Godot. Report any errors from the editor and they will be fixed in the next update.
+
 ## [Stage 4] - 2026-11-26
 
 ### Added

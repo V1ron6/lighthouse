@@ -17,6 +17,10 @@ const SPAWN_RADIUS := 42.0
 var enemy_parent: Node
 var wave := 0
 var running := true
+## Run one wave only, then stop. Used for base attacks during missions.
+var single_wave := false
+## If above 0, every wave has this many enemies.
+var wave_size_override := 0
 
 var _active := false
 var _to_spawn := 0
@@ -43,6 +47,8 @@ func _process(delta: float) -> void:
 	elif alive == 0:
 		_active = false
 		_countdown = INTERMISSION
+		if single_wave:
+			running = false
 		EventBus.wave_cleared.emit(wave)
 
 
@@ -62,7 +68,7 @@ func enemies_left() -> int:
 func _start_wave() -> void:
 	wave += 1
 	_active = true
-	_to_spawn = BASE_COUNT + COUNT_STEP * (wave - 1)
+	_to_spawn = wave_size_override if wave_size_override > 0 else BASE_COUNT + COUNT_STEP * (wave - 1)
 	_spawn_timer = 0.0
 	EventBus.wave_started.emit(wave)
 

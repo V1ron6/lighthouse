@@ -18,6 +18,7 @@ func _ready() -> void:
 	_label.add_theme_font_size_override("font_size", 30)
 	box.add_child(_label)
 
+	_add_button(box, "Missions", func(): get_tree().change_scene_to_file("res://scenes/missions/mission_select.tscn"))
 	_add_button(box, "Defend the lighthouse", func(): get_tree().change_scene_to_file("res://scenes/base/base_defence.tscn"))
 	_add_button(box, "Start test arena", func(): get_tree().change_scene_to_file("res://scenes/levels/test_arena.tscn"))
 	_add_button(box, "+100 points", func(): GameManager.add_points(100))
@@ -49,7 +50,7 @@ func _add_button(parent: Node, text: String, action: Callable) -> void:
 
 
 func _refresh(_a: Variant = null, _b: Variant = null) -> void:
-	_label.text = "LIGHTHOUSE  |  Stage 4\nRank: %s  (%d pts, %d to next)\nQubits: %d\nBase: %d/%d   Core: %d/%d" % [
+	_label.text = "LIGHTHOUSE  |  Stage 5\nRank: %s  (%d pts, %d to next)\nQubits: %d\nBase: %d/%d   Core: %d/%d" % [
 		GameManager.get_rank_name(),
 		GameManager.points,
 		GameManager.points_to_next_rank(),

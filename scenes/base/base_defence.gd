@@ -8,20 +8,31 @@ const BaseScript := preload("res://scenes/base/lighthouse_base.gd")
 const TurretScript := preload("res://scenes/base/turret.gd")
 const WaveScript := preload("res://scenes/base/wave_manager.gd")
 
+const MAIN_SCENE := "res://scenes/levels/main.tscn"
+const SELECT_SCENE := "res://scenes/missions/mission_select.tscn"
 const PLAYER_START := Vector3(0, 1, 11)
 const TURRET_SPOTS: Array[Vector3] = [
 	Vector3(7, 0, 6), Vector3(-7, 0, 6), Vector3(7, 0, -6), Vector3(-7, 0, -6),
 ]
-## Base health restored when a wave is cleared.
+## Base health restored when a wave is cleared (endless mode only).
 const WAVE_REPAIR := 150
 
 var _hud = null
 var _player = null
 var _waves = null
+## True when the player chose to defend the base during a mission.
+var _attack_mode := false
+var _attack_strength := 0
+## "gameover", "fell" or "repelled"
+var _panel_mode := ""
 
 
 func _ready() -> void:
-	GameManager.reset_base()
+	_attack_mode = not GameManager.pending_attack.is_empty()
+	if _attack_mode:
+		_attack_strength = int(GameManager.pending_attack["strength"])
+	else:
+		GameManager.reset_base()
 	_build_environment()
 	_build_ground()
 
@@ -34,19 +45,24 @@ func _ready() -> void:
 
 	_waves = WaveScript.new()
 	_waves.enemy_parent = self
+	if _attack_mode:
+		_waves.single_wave = true
+		_waves.wave_size_override = _attack_strength
 	add_child(_waves)
 
 	_hud.back_pressed.connect(_go_back)
-	_hud.restart_pressed.connect(_restart)
+	_hud.panel_choice.connect(_on_panel_choice)
 	EventBus.wave_started.connect(_on_wave_started)
 	EventBus.wave_cleared.connect(_on_wave_cleared)
 	EventBus.core_destroyed.connect(_on_core_destroyed)
-	_hud.show_banner("Defend the lighthouse", 3.0)
+	_hud.show_banner("The lighthouse is under attack!" if _attack_mode else "Defend the lighthouse", 3.0)
 
 
 func _process(_delta: float) -> void:
 	var wave_line := ""
-	if _waves.is_active():
+	if _attack_mode:
+		wave_line = "Attackers left: %d" % _waves.enemies_left()
+	elif _waves.is_active():
 		wave_line = "Wave %d   |   %d left" % [_waves.wave, _waves.enemies_left()]
 	else:
 		wave_line = "Next wave in %d" % ceili(_waves.seconds_to_next_wave())
@@ -135,26 +151,62 @@ func _on_player_died() -> void:
 
 
 func _on_wave_started(wave: int) -> void:
-	_hud.show_banner("Wave %d" % wave, 2.0)
+	if not _attack_mode:
+		_hud.show_banner("Wave %d" % wave, 2.0)
 
 
 func _on_wave_cleared(wave: int) -> void:
+	if _attack_mode:
+		_on_attack_repelled()
+		return
 	GameManager.repair_base(WAVE_REPAIR)
 	_hud.show_banner("Wave %d cleared. Base repaired." % wave, 2.5)
 
 
+func _on_attack_repelled() -> void:
+	var points := GameManager.DEFEND_POINTS_BASE + _attack_strength * 2
+	GameManager.add_points(points)
+	GameManager.pending_attack = {}
+	GameManager.save_game()
+	_panel_mode = "repelled"
+	get_tree().paused = true
+	_hud.show_panel("ATTACK REPELLED\n+%d points\nBase %d/%d" % [points, GameManager.base_health, GameManager.MAX_BASE_HEALTH],
+		["Back to missions", "Main menu"])
+
+
 func _on_core_destroyed() -> void:
 	_waves.running = false
-	var survived := maxi(0, _waves.wave - 1)
-	_hud.show_game_over("The power core has been destroyed.\nWaves survived: %d" % survived)
 	get_tree().paused = true
+	if _attack_mode:
+		_panel_mode = "fell"
+		_hud.show_panel("The power core has been destroyed.", ["Rebuild the lighthouse", "Main menu"])
+	else:
+		_panel_mode = "gameover"
+		var survived := maxi(0, _waves.wave - 1)
+		_hud.show_panel("The power core has been destroyed.\nWaves survived: %d" % survived, ["Try again", "Back to menu"])
+
+
+func _on_panel_choice(index: int) -> void:
+	get_tree().paused = false
+	match _panel_mode:
+		"gameover":
+			if index == 0:
+				get_tree().reload_current_scene()
+			else:
+				get_tree().change_scene_to_file(MAIN_SCENE)
+		"fell":
+			GameManager.reset_base()
+			GameManager.pending_attack = {}
+			GameManager.save_game()
+			get_tree().change_scene_to_file(SELECT_SCENE if index == 0 else MAIN_SCENE)
+		"repelled":
+			get_tree().change_scene_to_file(SELECT_SCENE if index == 0 else MAIN_SCENE)
 
 
 func _go_back() -> void:
 	get_tree().paused = false
-	get_tree().change_scene_to_file("res://scenes/levels/main.tscn")
-
-
-func _restart() -> void:
-	get_tree().paused = false
-	get_tree().reload_current_scene()
+	if _attack_mode:
+		GameManager.pending_attack = {}
+		get_tree().change_scene_to_file(SELECT_SCENE)
+	else:
+		get_tree().change_scene_to_file(MAIN_SCENE)
