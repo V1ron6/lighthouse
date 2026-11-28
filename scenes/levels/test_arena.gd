@@ -76,7 +76,7 @@ func _spawn_player() -> void:
 	add_child(_player)
 	_player.health_changed.connect(_on_player_health_changed)
 	_player.died.connect(_on_player_died)
-	_player.rifle.heat_changed.connect(_on_heat_changed)
+	_player.weapon_heat_changed.connect(_on_heat_changed)
 	_refresh_hud()
 
 

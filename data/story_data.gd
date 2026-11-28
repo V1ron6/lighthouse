@@ -11,6 +11,10 @@ const INTRO_PAGES: Array[String] = [
 ]
 
 const RADIO := {
+	"mothership_down": {
+		"title": "Command: the Mothership is down",
+		"text": "Its hull is breaking up over the field. The swarm has lost its anchor. Whatever comes next, you made it possible.",
+	},
 	"mission_1": {
 		"title": "Command: well done, Recruit",
 		"text": "Command to lighthouse. First sortie logged. The scouts you met are the cheapest thing the swarm owns. They do not think. Others will.",

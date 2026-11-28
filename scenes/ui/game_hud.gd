@@ -16,6 +16,8 @@ var touch: Control
 
 var _flash: ColorRect
 var _heat_bar: ProgressBar
+var _swap_button: Button
+var _weapon_label: Label
 var _info: Label
 var _status: Label
 var _banner: Label
@@ -78,6 +80,23 @@ func _ready() -> void:
 	back.offset_bottom = 76.0
 	add_child(back)
 
+	_swap_button = _make_button("Swap weapon", func(): pass)
+	_swap_button.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_swap_button.offset_left = -170.0
+	_swap_button.offset_right = -20.0
+	_swap_button.offset_top = 84.0
+	_swap_button.offset_bottom = 140.0
+	add_child(_swap_button)
+
+	_weapon_label = Label.new()
+	_weapon_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	_weapon_label.offset_left = -150.0
+	_weapon_label.offset_right = 150.0
+	_weapon_label.offset_top = 44.0
+	_weapon_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_weapon_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_weapon_label)
+
 	_action_button = _make_button("", func(): action_pressed.emit())
 	_action_button.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	_action_button.offset_left = -160.0
@@ -104,7 +123,10 @@ func _exit_tree() -> void:
 ## Connect the player's health and rifle heat to the HUD.
 func bind_player(player) -> void:
 	player.health_changed.connect(_on_player_health_changed)
-	player.rifle.heat_changed.connect(_on_heat_changed)
+	player.weapon_heat_changed.connect(_on_heat_changed)
+	player.weapon_changed.connect(_on_weapon_changed)
+	_swap_button.pressed.connect(player.next_weapon)
+	_on_weapon_changed(player.rifle.weapon_name)
 	_last_health = player.health
 
 
@@ -205,6 +227,10 @@ func _on_player_health_changed(current: int, maximum: int) -> void:
 		_flash.color.a = 0.35
 		create_tween().tween_property(_flash, "color:a", 0.0, 0.3)
 	_last_health = current
+
+
+func _on_weapon_changed(weapon_name: String) -> void:
+	_weapon_label.text = weapon_name + "  (Q to swap)"
 
 
 func _on_heat_changed(heat: float, overheated: bool) -> void:

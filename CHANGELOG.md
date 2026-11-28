@@ -5,6 +5,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [Stage 13] - 2026-11-28
+
+### Added
+- `scenes/enemies/mothership.gd`: the boss. Circles overhead, three phases by health, launches flyers then soldiers then heavies, shield cuts damage to 10% while escorts live, fires bolts at the player.
+- `data/weapon_data.gd` and configurable `energy_rifle.gd`: scatter blaster (8 pellets), pulse carbine (fast, low heat), plasma cannon (splash), arc launcher (chains to 3 more enemies).
+- `scenes/weapons/machete.gd`: melee, short forward cone.
+- Weapon swapping: Q key or the Swap weapon button; the heat bar follows the active weapon. Only owned weapons your rank can use are carried.
+- All 20 main missions in `data/mission_data.gd`, in four types: eliminate, survive, hunt (a named alien type), boss. Each has an enemy mix. The mission list now scrolls.
+- Radio message when the Mothership falls.
+
+### Changed
+- Mission schema: `kills` replaced by `type`, `goal`, `mix` (and `target` for hunts).
+
+### Notes
+- Not yet run in Godot. Mothership health, phase timings, weapon stats and mission mixes are untested guesses.
+- Inactive weapons keep their heat until swapped back to.
+- Final-ending trigger after the Mothership is still Stage 11's logic; check it fires.
+
 ## [Stage 12c] - 2026-11-28
 
 ### Changed

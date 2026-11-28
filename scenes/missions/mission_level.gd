@@ -1,5 +1,5 @@
 extends Node3D
-## A mission away from the base. Eliminate the required number of aliens.
+## A mission away from the base. Types: eliminate, survive, hunt, boss.
 ## The base may be attacked while you are out. When that happens the game
 ## pauses and the player must pick: defend the base (mission lost) or carry
 ## on (the base fends for itself and the player loses rank points).
@@ -10,6 +10,7 @@ const ScoutScript := preload("res://scenes/enemies/scout.gd")
 const SoldierScript := preload("res://scenes/enemies/soldier.gd")
 const HeavyScript := preload("res://scenes/enemies/heavy.gd")
 const FlyerScript := preload("res://scenes/enemies/flyer.gd")
+const MothershipScript := preload("res://scenes/enemies/mothership.gd")
 const Builder := preload("res://scripts/level_builder.gd")
 const MissionData := preload("res://data/mission_data.gd")
 
@@ -20,6 +21,8 @@ var _mission: Dictionary = {}
 var _hud = null
 var _player = null
 var _kills := 0
+var _target_kills := 0
+var _boss = null
 var _elapsed := 0.0
 var _attack_time := -1.0
 var _attack_pending := false
@@ -57,6 +60,9 @@ func _ready() -> void:
 		_attack_time = float(_mission["attack_after"]) + randf_range(-5.0, 5.0)
 		_attack_pending = true
 
+	if String(_mission["type"]) == "boss":
+		_spawn_boss()
+
 	_hud.show_banner(String(_mission["name"]), 2.5)
 
 
@@ -65,19 +71,48 @@ func _process(delta: float) -> void:
 		return
 	_elapsed += delta
 
+	var type := String(_mission["type"])
+	var goal := int(_mission["goal"])
 	var alive := get_tree().get_nodes_in_group("enemies").size()
 	var risk := int(_mission["risk"])
 	_spawn_timer -= delta
-	if _spawn_timer <= 0.0 and alive < 5 + risk * 2 and _kills + alive < int(_mission["kills"]):
-		_spawn_timer = 2.4 - 0.4 * risk
-		_spawn_scout()
+	if _spawn_timer <= 0.0 and type != "boss":
+		var cap := 7
+		if type == "eliminate":
+			cap = 5 + risk * 2
+		elif type == "survive":
+			cap = 6 + risk * 2
+		var wants_more := true
+		if type == "eliminate":
+			wants_more = _kills + alive < goal
+		if alive < cap and wants_more:
+			_spawn_timer = maxf(0.8, 2.4 - 0.4 * risk)
+			_spawn_enemy()
+
+	if type == "survive" and _elapsed >= float(goal) and not _ended:
+		_complete()
+		return
 
 	if _attack_pending and _elapsed >= _attack_time:
 		_attack_pending = false
 		_trigger_attack()
 
-	_hud.set_status("Objective: eliminate aliens %d/%d\nBase %d/%d   Core %d/%d" % [
-		_kills, int(_mission["kills"]),
+	var objective := ""
+	match type:
+		"eliminate":
+			objective = "Eliminate aliens %d/%d" % [_kills, goal]
+		"survive":
+			objective = "Survive %d/%d s" % [mini(int(_elapsed), goal), goal]
+		"hunt":
+			objective = "Hunt %ss %d/%d" % [String(_mission["target"]), _target_kills, goal]
+		"boss":
+			objective = "Destroy the Mothership"
+			if _boss != null and is_instance_valid(_boss):
+				objective += "  [%d/%d, phase %d%s]" % [
+					maxi(_boss.health, 0), _boss.max_health, _boss.phase_number(),
+					", SHIELDED" if _boss.shielded else ""]
+	_hud.set_status("%s\nBase %d/%d   Core %d/%d" % [
+		objective,
 		GameManager.base_health, GameManager.MAX_BASE_HEALTH,
 		GameManager.core_integrity, GameManager.MAX_CORE_INTEGRITY,
 	])
@@ -95,16 +130,46 @@ func _build_cover() -> void:
 		Builder.add_box(self, pos, size, Color(0.3, 0.88, 1.0), true)
 
 
-func _spawn_scout() -> void:
-	# Riskier missions field more thinking aliens, but never in the first few kills.
-	var risk := int(_mission["risk"])
-	var scout: CharacterBody3D = ScoutScript.new()
-	if _kills >= 8 and risk >= 3 and randf() < 0.1:
-		scout = HeavyScript.new()
-	elif _kills >= 5 and risk >= 2 and randf() < 0.08 * risk:
-		scout = FlyerScript.new()
-	elif _kills >= 3 and randf() < 0.15 * risk:
-		scout = SoldierScript.new()
+## Weighted pick from the mission's mix. Non-scouts are held back for the first few kills.
+func _pick_enemy() -> CharacterBody3D:
+	var mix: Dictionary = _mission["mix"]
+	var weights := {}
+	for key in ["scout", "soldier", "flyer", "heavy"]:
+		weights[key] = float(mix.get(key, 0.0))
+	if _kills < 3:
+		weights["soldier"] = 0.0
+		weights["flyer"] = 0.0
+		weights["heavy"] = 0.0
+		weights["scout"] = maxf(1.0, weights["scout"])
+	var total := 0.0
+	for key in weights:
+		total += weights[key]
+	if total <= 0.0:
+		return ScoutScript.new()
+	var roll := randf() * total
+	for key in ["scout", "soldier", "flyer", "heavy"]:
+		roll -= weights[key]
+		if roll <= 0.0:
+			match key:
+				"soldier":
+					return SoldierScript.new()
+				"flyer":
+					return FlyerScript.new()
+				"heavy":
+					return HeavyScript.new()
+				_:
+					return ScoutScript.new()
+	return ScoutScript.new()
+
+
+func _spawn_boss() -> void:
+	_boss = MothershipScript.new()
+	_boss.position = Vector3(0.0, 0.0, -10.0)
+	add_child(_boss)
+
+
+func _spawn_enemy() -> void:
+	var scout: CharacterBody3D = _pick_enemy()
 	var angle := randf() * TAU
 	var spawn: Vector3 = _player.global_position + Vector3(cos(angle), 0.0, sin(angle)) * SPAWN_DISTANCE
 	var limit := FIELD_SIZE / 2.0 - 2.0
@@ -172,10 +237,25 @@ func _carry_on() -> void:
 
 # --- Ending the mission ---
 
-func _on_enemy_killed(_enemy_type: String) -> void:
+func _on_enemy_killed(enemy_type: String) -> void:
+	if _ended:
+		return
 	_kills += 1
-	if _kills >= int(_mission["kills"]) and not _ended:
-		_complete()
+	var type := String(_mission["type"])
+	var goal := int(_mission["goal"])
+	match type:
+		"eliminate":
+			if _kills >= goal:
+				_complete()
+		"hunt":
+			if enemy_type == String(_mission["target"]):
+				_target_kills += 1
+				if _target_kills >= goal:
+					_complete()
+		"boss":
+			if enemy_type == "mothership":
+				GameManager.broadcast("mothership_down")
+				_complete()
 
 
 func _complete() -> void:

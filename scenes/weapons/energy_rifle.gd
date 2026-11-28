@@ -6,16 +6,25 @@ extends Node3D
 signal fired
 signal heat_changed(heat: float, overheated: bool)
 
-const DAMAGE := 25
-const FIRE_INTERVAL := 0.15
-const RANGE := 100.0
-const HEAT_PER_SHOT := 8.0
+const WeaponData := preload("res://data/weapon_data.gd")
+
 const COOL_RATE := 28.0
 const COOL_DELAY := 0.35
 const OVERHEAT_AT := 100.0
 const RECOVER_AT := 40.0
 
-const BOLT_COLOR := Color(0.3, 0.88, 1.0)
+var weapon_id := "energy_rifle"
+var weapon_name := "Energy rifle"
+var damage := 25
+var fire_interval := 0.15
+var pellets := 1
+var spread := 0.0
+var heat_per_shot := 8.0
+var shot_range := 100.0
+var splash := 0.0
+var chain := 0
+var bolt_color := Color(0.3, 0.88, 1.0)
+var sound := "rifle"
 
 var trigger_held := false
 var exclude_rid: RID
@@ -29,6 +38,23 @@ var _muzzle: Node3D
 var _flash: MeshInstance3D
 var _last_heat := -1.0
 var _last_overheated := false
+
+
+## Call before adding to the tree.
+func configure(id: String) -> void:
+	var stats := WeaponData.stats(id)
+	weapon_id = id
+	weapon_name = String(stats["name"])
+	damage = int(stats["damage"])
+	fire_interval = float(stats["interval"])
+	pellets = int(stats["pellets"])
+	spread = float(stats["spread"])
+	heat_per_shot = float(stats["heat"])
+	shot_range = float(stats["range"])
+	splash = float(stats["splash"])
+	chain = int(stats["chain"])
+	bolt_color = stats["color"]
+	sound = String(stats["sound"])
 
 
 func _ready() -> void:
@@ -55,9 +81,9 @@ func _physics_process(delta: float) -> void:
 
 
 func _shoot() -> void:
-	_cooldown = FIRE_INTERVAL
+	_cooldown = fire_interval
 	_since_shot = 0.0
-	heat += HEAT_PER_SHOT
+	heat += heat_per_shot
 	if heat >= OVERHEAT_AT:
 		heat = OVERHEAT_AT
 		overheated = true
@@ -65,7 +91,18 @@ func _shoot() -> void:
 	_show_flash()
 
 	var from := _camera.global_position
-	var to := from + (-_camera.global_transform.basis.z) * RANGE
+	var forward := -_camera.global_transform.basis.z
+	for i in pellets:
+		var dir := forward
+		if spread > 0.0:
+			dir = (forward + _camera.global_transform.basis.x * randf_range(-spread, spread) \
+				+ _camera.global_transform.basis.y * randf_range(-spread, spread)).normalized()
+		_fire_ray(from, dir)
+	Sfx.play(sound, -4.0)
+
+
+func _fire_ray(from: Vector3, dir: Vector3) -> void:
+	var to := from + dir * shot_range
 	var query := PhysicsRayQueryParameters3D.create(from, to)
 	query.exclude = [exclude_rid]
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
@@ -75,10 +112,45 @@ func _shoot() -> void:
 		end = hit["position"]
 		var collider: Object = hit["collider"]
 		if collider != null and collider.has_method("take_hit"):
-			collider.take_hit(DAMAGE)
+			collider.take_hit(damage)
+		if splash > 0.0:
+			_apply_splash(end, collider)
+		if chain > 0 and collider != null:
+			_apply_chain(end, collider)
 		_spawn_impact(end)
 	_spawn_tracer(_muzzle.global_position, end)
-	Sfx.play("rifle", -4.0)
+
+
+func _apply_splash(centre: Vector3, direct: Object) -> void:
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		if enemy == direct or not enemy.has_method("take_hit"):
+			continue
+		if enemy.global_position.distance_to(centre) <= splash:
+			enemy.take_hit(int(damage * 0.6))
+
+
+func _apply_chain(start: Vector3, first: Object) -> void:
+	var done: Array = [first]
+	var at := start
+	var dmg := damage
+	for i in chain:
+		var best: Node3D = null
+		var best_distance := 8.0
+		for enemy in get_tree().get_nodes_in_group("enemies"):
+			if done.has(enemy) or not enemy.has_method("take_hit"):
+				continue
+			var d: float = enemy.global_position.distance_to(at)
+			if d < best_distance:
+				best_distance = d
+				best = enemy
+		if best == null:
+			return
+		dmg = int(dmg * 0.7)
+		best.take_hit(dmg)
+		var to: Vector3 = best.global_position + Vector3(0.0, 1.0, 0.0)
+		_spawn_tracer(at, to)
+		done.append(best)
+		at = to
 
 
 func _build_model() -> void:
@@ -96,7 +168,7 @@ func _build_model() -> void:
 	var strip := MeshInstance3D.new()
 	var strip_mesh := BoxMesh.new()
 	strip_mesh.size = Vector3(0.125, 0.03, 0.4)
-	strip_mesh.material = _glow_material(BOLT_COLOR)
+	strip_mesh.material = _glow_material(bolt_color)
 	strip.mesh = strip_mesh
 	strip.position = Vector3(0.22, -0.13, -0.5)
 	add_child(strip)
@@ -127,7 +199,7 @@ func _spawn_tracer(from: Vector3, to: Vector3) -> void:
 	var tracer := MeshInstance3D.new()
 	var mesh := BoxMesh.new()
 	mesh.size = Vector3(0.025, 0.025, length)
-	mesh.material = _glow_material(BOLT_COLOR)
+	mesh.material = _glow_material(bolt_color)
 	tracer.mesh = mesh
 	get_tree().current_scene.add_child(tracer)
 	tracer.global_position = (from + to) / 2.0

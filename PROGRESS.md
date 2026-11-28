@@ -2,7 +2,7 @@
 
 Lighthouse is built in stages. After each stage this file and `CHANGELOG.md` are updated and a full project zip is delivered.
 
-**Current stage:** Stage 5 complete. Next: Stage 6.
+**Current stage:** Stage 13 complete. Next: Stage 14.
 
 | Stage | Goal | Status |
 | --- | --- | --- |
@@ -20,7 +20,7 @@ Lighthouse is built in stages. After each stage this file and `CHANGELOG.md` are
 | 11 | Ten colonies, fall and retake, radio story, first-launch intro story, two endings | Done (untested in Godot) |
 | 12 | Heavy and flyer aliens with the thinking AI; flyers hunt the jet | Done (untested in Godot) |
 | 12b | Placeholder sound effects and a sound manager (`Sfx`) | Done (untested in Godot) |
-| 13 | Mothership boss, machete and more weapons, the full 20 missions | Next |
+| 13 | Mothership boss, machete and more weapons, the full 20 missions | Done (untested in Godot) |
 | 14 | Polish (real menu, music, icons and font, art pass), Android export | Planned |
 
 ## Decisions so far
@@ -59,11 +59,11 @@ Lighthouse is built in stages. After each stage this file and `CHANGELOG.md` are
 
 - Rank thresholds, item prices and unlock ranks are placeholders. Tune after playtesting.
 - Sounds are crude synth placeholders. Godot imports the .wav files the first time you open the project.
-- The machete has no melee code yet (planned for Stage 13).
+- Weapon stats, Mothership numbers and mission mixes are untested guesses.
 - Heavy and flyer numbers are untested guesses, as are the spawn shares.
 - Retaking a colony is automatic. If you would rather fight a special retake mission, say so.
 - Story text is a first draft (original, written by Claude). Edit `data/story_data.gd` freely.
-- Only 3 of the planned 20 main missions exist.
+- All 20 missions exist; rewards and difficulty are untuned.
 - The hub is a test screen with a debug column; a proper menu comes in the polish stage.
 - Jet handling (speed, turn rates, aim assist cone, camera) is a first guess. Report how it feels on the phone. The interceptor and gunship are in the Market but not flyable yet.
 - Comrade numbers (damage, health, slots, price, starting 2) are guesses. Starting with 2 comrades goes beyond the stated loadout, so say if you want to start with none.

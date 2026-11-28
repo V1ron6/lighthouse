@@ -6,8 +6,12 @@ extends CharacterBody3D
 
 signal died
 signal health_changed(current: int, maximum: int)
+signal weapon_changed(weapon_name: String)
+signal weapon_heat_changed(heat: float, overheated: bool)
 
 const RifleScript := preload("res://scenes/weapons/energy_rifle.gd")
+const MacheteScript := preload("res://scenes/weapons/machete.gd")
+const WeaponData := preload("res://data/weapon_data.gd")
 
 const SPEED := 6.0
 const EYE_HEIGHT := 1.6
@@ -19,8 +23,10 @@ const MAX_HEALTH := 100
 
 ## Set by the level. Anything with move_vector, fire_held and consume_look().
 var touch = null
-## The energy rifle node (Variant on purpose, so its script members resolve at runtime).
+## The active weapon (Variant on purpose, so its script members resolve at runtime).
 var rifle = null
+var weapons: Array = []
+var _weapon_index := 0
 
 var health: int = MAX_HEALTH
 var head: Node3D
@@ -52,9 +58,51 @@ func _ready() -> void:
 	camera.current = true
 	head.add_child(camera)
 
-	rifle = RifleScript.new()
-	rifle.exclude_rid = get_rid()
-	camera.add_child(rifle)
+	_build_weapons()
+	_select_weapon(0)
+
+
+## One node per owned weapon the current rank may use. The rifle is always available.
+func _build_weapons() -> void:
+	for id in WeaponData.ORDER:
+		if id != "energy_rifle" and not (GameManager.has_item(id) and GameManager.can_use(id)):
+			continue
+		var weapon: Node3D
+		if id == "machete":
+			weapon = MacheteScript.new()
+		else:
+			weapon = RifleScript.new()
+			weapon.configure(id)
+		weapon.exclude_rid = get_rid()
+		weapon.heat_changed.connect(_on_weapon_heat.bind(weapon))
+		camera.add_child(weapon)
+		weapon.visible = false
+		weapon.set_physics_process(false)
+		weapons.append(weapon)
+
+
+func _select_weapon(index: int) -> void:
+	if weapons.is_empty():
+		return
+	if rifle != null:
+		rifle.trigger_held = false
+		rifle.visible = false
+		rifle.set_physics_process(false)
+	_weapon_index = index % weapons.size()
+	rifle = weapons[_weapon_index]
+	rifle.visible = true
+	rifle.set_physics_process(true)
+	weapon_changed.emit(rifle.weapon_name)
+	weapon_heat_changed.emit(rifle.heat, rifle.overheated)
+
+
+func next_weapon() -> void:
+	_select_weapon(_weapon_index + 1)
+
+
+func _on_weapon_heat(heat: float, overheated: bool, weapon: Node) -> void:
+	if weapon == rifle:
+		weapon_heat_changed.emit(heat, overheated)
 
 
 func _exit_tree() -> void:
@@ -62,6 +110,8 @@ func _exit_tree() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("swap_weapon"):
+		next_weapon()
 	if _has_touchscreen:
 		return
 	if event is InputEventMouseButton and event.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
@@ -122,6 +172,7 @@ func _ensure_actions() -> void:
 	_add_key_action("move_left", KEY_A)
 	_add_key_action("move_right", KEY_D)
 	_add_key_action("fire", KEY_SPACE)
+	_add_key_action("swap_weapon", KEY_Q)
 	# Touch devices turn taps into mouse clicks, so only bind the mouse without a touchscreen.
 	if first_time and not _has_touchscreen:
 		var click := InputEventMouseButton.new()

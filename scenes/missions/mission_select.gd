@@ -10,12 +10,16 @@ var _mission_buttons: Array = []
 
 
 func _ready() -> void:
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	add_child(scroll)
+	var center := CenterContainer.new()
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(center)
 	var box := VBoxContainer.new()
-	box.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	box.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	box.grow_vertical = Control.GROW_DIRECTION_BOTH
 	box.add_theme_constant_override("separation", 12)
-	add_child(box)
+	center.add_child(box)
 
 	var title := Label.new()
 	title.text = "MISSIONS"
@@ -64,8 +68,8 @@ func _refresh(_a: Variant = null, _b: Variant = null) -> void:
 	for entry in _mission_buttons:
 		var mission: Dictionary = entry["mission"]
 		var button: Button = entry["button"]
-		var text := "%s   (Risk %d/3)\n%s\nReward: %d qubits, %d points" % [
-			mission["name"], mission["risk"], mission["description"],
+		var text := "%s  [%s]   (Risk %d/3)\n%s\nReward: %d qubits, %d points" % [
+			mission["name"], String(mission["type"]).to_upper(), mission["risk"], mission["description"],
 			mission["reward_qubits"], mission["reward_points"],
 		]
 		var locked: bool = GameManager.rank_index < int(mission["min_rank"])
