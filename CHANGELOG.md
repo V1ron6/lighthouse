@@ -5,6 +5,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [Stage 12c] - 2026-11-28
+
+### Changed
+- `project.godot` now uses the Compatibility renderer (OpenGL) instead of Mobile (Vulkan), so the project runs on older graphics hardware. Launch Godot 4 with `--rendering-driver opengl3 --rendering-method gl_compatibility` if the editor crashes.
+
 ## [Stage 12b] - 2026-11-28
 
 ### Added
