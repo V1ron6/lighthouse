@@ -113,7 +113,7 @@ func _refresh(_a: Variant = null, _b: Variant = null) -> void:
 	var ending_line := ""
 	if GameManager.ending != "":
 		ending_line = "   Ending reached: %s" % ("The Dark Dawn" if GameManager.ending == "sever" else "The Eternal Watch")
-	_label.text = "LIGHTHOUSE  |  Stage 11\nRank: %s  (%d pts, %d to next)   Qubits: %d\nBase: %d/%d   Core: %d/%d   Colonies standing: %d/10%s" % [
+	_label.text = "LIGHTHOUSE  |  Stage 12\nRank: %s  (%d pts, %d to next)   Qubits: %d\nBase: %d/%d   Core: %d/%d   Colonies standing: %d/10%s" % [
 		GameManager.get_rank_name(),
 		GameManager.points,
 		GameManager.points_to_next_rank(),

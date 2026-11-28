@@ -82,7 +82,9 @@ func _process(_delta: float) -> void:
 	else:
 		wave_line = "Next wave in %d" % ceili(_waves.seconds_to_next_wave())
 	if _flying:
-		wave_line += "\nJET   altitude %d   (land at the pad)" % int(_jet.altitude())
+		wave_line += "\nJET   altitude %d   hull %d/%d" % [int(_jet.altitude()), _jet.hull, _jet.MAX_HULL]
+	elif _jet != null and not _jet.can_board():
+		wave_line += "\nJet under repair: %d s" % ceili(_jet.repair_left)
 	_hud.set_status("Base %d/%d   Core %d/%d\n%s" % [
 		GameManager.base_health, GameManager.MAX_BASE_HEALTH,
 		GameManager.core_integrity, GameManager.MAX_CORE_INTEGRITY,
@@ -206,6 +208,7 @@ func _build_hangar() -> void:
 		_jet = JetScript.new()
 		add_child(_jet)
 		_jet.park(PAD_POS)
+		_jet.shot_down.connect(_on_jet_shot_down)
 
 
 func _flat_distance(a: Vector3, b: Vector3) -> float:
@@ -219,7 +222,7 @@ func _update_jet_prompt() -> void:
 	if _flying:
 		if _flat_distance(_jet.global_position, PAD_POS) <= LAND_DISTANCE and _jet.altitude() <= LAND_ALTITUDE:
 			text = "Land the jet [E]"
-	elif _flat_distance(_player.global_position, PAD_POS) <= BOARD_DISTANCE:
+	elif _flat_distance(_player.global_position, PAD_POS) <= BOARD_DISTANCE and _jet.can_board():
 		text = "Board the jet [E]"
 	if text != "":
 		_hud.show_action(text)
@@ -252,6 +255,11 @@ func _board() -> void:
 	_jet.take_off(PAD_POS)
 	_hud.hide_action()
 	_hud.show_banner("Airborne", 1.5)
+
+
+func _on_jet_shot_down() -> void:
+	_land()
+	_hud.show_banner("Shot down! The jet needs %d s of repairs" % int(_jet.REPAIR_TIME), 3.0)
 
 
 func _land() -> void:

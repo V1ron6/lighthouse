@@ -17,13 +17,10 @@ enum State { ADVANCE, ENGAGE, FLANK, RETREAT, REGROUP }
 
 const Fx := preload("res://scripts/fx.gd")
 
-const MAX_HEALTH := 70
-const SPEED := 5.0
+const BASE_MAX_HEALTH := 70
 const TURN_SPEED := 8.0
 const PREFERRED_RANGE := 13.0
 const FIRE_RANGE := 18.0
-const FIRE_INTERVAL := 1.3
-const SHOT_DAMAGE := 8
 const THINK_INTERVAL := 0.4
 const MAX_RETREATS := 2
 const REGEN_PER_SECOND := 6.0
@@ -43,7 +40,13 @@ const EYE_COLOR := Color(1.0, 0.35, 0.3)
 const BOLT_COLOR := Color(1.0, 0.35, 0.3)
 
 var intelligence := 1
-var health := MAX_HEALTH
+## Tuned by subclasses (the heavy) before the fight starts.
+var max_health := BASE_MAX_HEALTH
+var move_speed := 5.0
+var fire_interval := 1.3
+var shot_damage := 8
+var enemy_type := "soldier"
+var health := BASE_MAX_HEALTH
 var state: State = State.ADVANCE
 var target: Node3D = null
 
@@ -53,7 +56,7 @@ var _wall_normal := Vector3.ZERO
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _think_timer := randf() * THINK_INTERVAL
 var _state_time := 0.0
-var _fire_cooldown := randf() * FIRE_INTERVAL
+var _fire_cooldown := randf() * 1.3
 var _strafe := 1.0 if randf() < 0.5 else -1.0
 var _flank_side := 1.0 if randf() < 0.5 else -1.0
 var _flank_point := Vector3.ZERO
@@ -124,14 +127,14 @@ func _physics_process(delta: float) -> void:
 		return
 
 	if state == State.REGROUP:
-		health = mini(MAX_HEALTH, health + int(REGEN_PER_SECOND * delta + randf()))
+		health = mini(max_health, health + int(REGEN_PER_SECOND * delta + randf()))
 
 	var to_target := target.global_position - global_position
 	to_target.y = 0.0
 	var distance := to_target.length()
 	var direction := to_target / distance if distance > 0.01 else Vector3.ZERO
 	var move_direction := _desired_direction(direction, distance)
-	var speed := SPEED
+	var speed := move_speed
 	if state == State.RETREAT:
 		speed *= 1.2
 	if state == State.ENGAGE or state == State.REGROUP:
@@ -231,7 +234,7 @@ func _think() -> void:
 			if distance >= RETREAT_DISTANCE or _state_time >= RETREAT_MAX_TIME:
 				_enter(State.REGROUP)
 		State.REGROUP:
-			var healed := health >= int(MAX_HEALTH * 0.7)
+			var healed := health >= int(max_health * 0.7)
 			if _state_time >= REGROUP_MAX_TIME or (_state_time >= 2.0 and (healed or allies >= 3)):
 				_enter(State.ADVANCE)
 
@@ -259,7 +262,7 @@ func _start_flank() -> void:
 func _should_retreat(allies: int) -> bool:
 	if _retreats >= MAX_RETREATS:
 		return false
-	var hp := float(health) / MAX_HEALTH
+	var hp := float(health) / max_health
 	if hp < (0.3 if intelligence == 1 else 0.5):
 		return true
 	if intelligence < 2:
@@ -368,14 +371,14 @@ func _try_fire(distance: float) -> void:
 		return
 	if not _has_line_of_sight():
 		return
-	_fire_cooldown = FIRE_INTERVAL
+	_fire_cooldown = fire_interval
 	var from := global_position + Vector3(0.0, 1.4, 0.0)
 	var to := target.global_position + Vector3(0.0, 1.0, 0.0)
 	var accuracy := 0.65 if intelligence == 1 else 0.85
 	if target == _base:
 		accuracy = 1.0
 	if randf() <= accuracy:
-		target.take_damage(SHOT_DAMAGE)
+		target.take_damage(shot_damage)
 	else:
 		to += Vector3(randf_range(-1.2, 1.2), randf_range(-0.5, 0.5), randf_range(-1.2, 1.2))
 	Fx.tracer(self, from, to, BOLT_COLOR)
@@ -403,7 +406,7 @@ func _die() -> void:
 	remove_from_group("enemies")
 	_shape.set_deferred("disabled", true)
 	died.emit()
-	EventBus.enemy_killed.emit("soldier")
+	EventBus.enemy_killed.emit(enemy_type)
 	var tween := create_tween()
 	tween.tween_property(self, "scale", Vector3.ZERO, 0.2)
 	tween.tween_callback(queue_free)

@@ -1,12 +1,14 @@
 extends Node
 ## Spawns scouts in waves around the edge of the map.
 ## Wave n has 4 + 2 * (n - 1) aliens, at most 8 alive at once.
-## Waves 1 and 2 are all scouts. From wave 3, soldiers join: 15% more of the wave each
-## wave, up to 60%.
+## Waves 1 and 2 are all scouts. Soldiers join from wave 3 (15% more each wave, up to
+## 60%), flyers from wave 4 (up to 30%), heavies from wave 5 (up to 25%).
 ## Short break between waves. Waves keep coming until the core falls.
 
 const ScoutScript := preload("res://scenes/enemies/scout.gd")
 const SoldierScript := preload("res://scenes/enemies/soldier.gd")
+const HeavyScript := preload("res://scenes/enemies/heavy.gd")
+const FlyerScript := preload("res://scenes/enemies/flyer.gd")
 
 const FIRST_WAVE_DELAY := 4.0
 const INTERMISSION := 8.0
@@ -76,9 +78,21 @@ func _start_wave() -> void:
 	EventBus.wave_started.emit(wave)
 
 
-func _spawn_enemy() -> void:
+func _make_enemy() -> CharacterBody3D:
+	var flyer_chance := clampf((wave - 3) * 0.1, 0.0, 0.3)
+	var heavy_chance := clampf((wave - 4) * 0.08, 0.0, 0.25)
 	var soldier_chance := clampf((wave - 2) * 0.15, 0.0, 0.6)
-	var scout: CharacterBody3D = SoldierScript.new() if randf() < soldier_chance else ScoutScript.new()
+	if randf() < flyer_chance:
+		return FlyerScript.new()
+	if randf() < heavy_chance:
+		return HeavyScript.new()
+	if randf() < soldier_chance:
+		return SoldierScript.new()
+	return ScoutScript.new()
+
+
+func _spawn_enemy() -> void:
+	var scout: CharacterBody3D = _make_enemy()
 	var angle := randf() * TAU
 	scout.position = Vector3(cos(angle) * SPAWN_RADIUS, 0.2, sin(angle) * SPAWN_RADIUS)
 	enemy_parent.add_child(scout)

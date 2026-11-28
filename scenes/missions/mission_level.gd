@@ -8,6 +8,8 @@ const PlayerScene := preload("res://scenes/player/player.tscn")
 const HudScript := preload("res://scenes/ui/game_hud.gd")
 const ScoutScript := preload("res://scenes/enemies/scout.gd")
 const SoldierScript := preload("res://scenes/enemies/soldier.gd")
+const HeavyScript := preload("res://scenes/enemies/heavy.gd")
+const FlyerScript := preload("res://scenes/enemies/flyer.gd")
 const Builder := preload("res://scripts/level_builder.gd")
 const MissionData := preload("res://data/mission_data.gd")
 
@@ -95,8 +97,14 @@ func _build_cover() -> void:
 
 func _spawn_scout() -> void:
 	# Riskier missions field more thinking aliens, but never in the first few kills.
-	var soldier_chance := 0.0 if _kills < 3 else 0.15 * int(_mission["risk"])
-	var scout: CharacterBody3D = SoldierScript.new() if randf() < soldier_chance else ScoutScript.new()
+	var risk := int(_mission["risk"])
+	var scout: CharacterBody3D = ScoutScript.new()
+	if _kills >= 8 and risk >= 3 and randf() < 0.1:
+		scout = HeavyScript.new()
+	elif _kills >= 5 and risk >= 2 and randf() < 0.08 * risk:
+		scout = FlyerScript.new()
+	elif _kills >= 3 and randf() < 0.15 * risk:
+		scout = SoldierScript.new()
 	var angle := randf() * TAU
 	var spawn: Vector3 = _player.global_position + Vector3(cos(angle), 0.0, sin(angle)) * SPAWN_DISTANCE
 	var limit := FIELD_SIZE / 2.0 - 2.0

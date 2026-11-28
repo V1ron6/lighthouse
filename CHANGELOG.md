@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [Stage 12] - 2026-11-28
+
+The Mothership, machete and extra weapons move to Stage 13.
+
+### Added
+- `scenes/enemies/heavy.gd`: an armoured brute built on the soldier brain, always cunning. Armour halves damage. The core in its chest opens when it fires and then takes double damage for 1.2 seconds.
+- `scenes/enemies/flyer.gd`: an air attacker with its own decision loop (circle, dive, break off, retreat and heal). It hunts the jet first, then the player, then the lighthouse.
+- The jet has hull (200). Flyers can shoot it down: the pilot lands on the pad and the jet is under repair for 20 seconds. The HUD shows hull and repair time.
+- Waves: flyers from wave 4, heavies from wave 5. Missions: heavies and flyers on riskier missions after enough kills.
+
+### Changed
+- `soldier.gd` uses variables for health, speed, fire rate and damage so subclasses can tune them. Soldiers report their `enemy_type` when killed.
+
 ## [Stage 11] - 2026-11-28
 
 ### Added

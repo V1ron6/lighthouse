@@ -18,7 +18,9 @@ Lighthouse is built in stages. After each stage this file and `CHANGELOG.md` are
 | 9 | Comrades: your own soldiers at the lighthouse (fight beside you, hold the base while you are away) | Done (untested in Godot) |
 | 10 | Hangar and fighter jet with touch flight controls | Done (untested in Godot) |
 | 11 | Ten colonies, fall and retake, radio story, first-launch intro story, two endings | Done (untested in Godot) |
-| 12 | More enemies (heavy, flyer, Mothership) with the same brain, more weapons, polish, Android export | Planned |
+| 12 | Heavy and flyer aliens with the thinking AI; flyers hunt the jet | Done (untested in Godot) |
+| 13 | Mothership boss, machete and more weapons, the full 20 missions | Next |
+| 14 | Polish (real menu, audio, art pass), Android export | Planned |
 
 ## Decisions so far
 
@@ -47,11 +49,15 @@ Lighthouse is built in stages. After each stage this file and `CHANGELOG.md` are
 - While you are in the jet, aliens do not target you (your character is parked). The jet cannot be hurt until flyers arrive in a later stage.
 - Colonies: after every ended mission a colony may fall (25% after a win, 35% after a failed or abandoned mission, at most 5 down at once). A fallen colony is retaken automatically after 3 won missions, with a radio message. Fallen colonies use the cheaper trade prices.
 - Story: intro pages on first launch, 10 once-only radio messages (missions won and rank-ups), plus dynamic colony lost and retaken transmissions, all kept in the Radio log. At Keeper of the Light the hub shows FINAL TRANSMISSION with two choices: Sever the Core (The Dark Dawn) or Keep the light (The Eternal Watch).
+- Heavy: slow, 220 health, always cunning. Armour halves damage, but the chest core glows for 1.2s after each shot it fires and then hits do double. Heavies join from wave 5 (up to 25%).
+- Flyer: 45 health, circles above its target then dives and strafes, breaks off, retreats to heal when hurt. Hunts the jet first. Flyers join from wave 4 (up to 30%).
+- The jet now has 200 hull. At 0 it is shot down: you are put back on the pad and the jet needs 20s of repairs. A normal landing repairs it fully.
 
 ## Open items
 
 - Rank thresholds, item prices and unlock ranks are placeholders. Tune after playtesting.
-- The machete has no melee code yet.
+- The machete has no melee code yet (planned for Stage 13).
+- Heavy and flyer numbers are untested guesses, as are the spawn shares.
 - Retaking a colony is automatic. If you would rather fight a special retake mission, say so.
 - Story text is a first draft (original, written by Claude). Edit `data/story_data.gd` freely.
 - Only 3 of the planned 20 main missions exist.

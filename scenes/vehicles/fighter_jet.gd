@@ -4,10 +4,16 @@ extends Node3D
 ##   stick left/right = turn (the jet banks), stick up/down = nose up/down
 ##   throttle is automatic, fire button (or Space) shoots the twin cannons
 ## The cannons lean toward the nearest enemy in front of the nose (aim assist), so
-## it is playable with a thumb. Flyers, which can hurt the jet, arrive in a later stage;
-## for now the jet takes no damage.
+## it is playable with a thumb. Flyers hunt the jet. At 0 hull it is shot down: the pilot
+## is put back on the pad and the jet is under repair for REPAIR_TIME seconds. A normal
+## landing repairs it fully.
+
+signal shot_down
 
 const Fx := preload("res://scripts/fx.gd")
+
+const MAX_HULL := 200
+const REPAIR_TIME := 20.0
 
 const SPEED := 32.0
 const YAW_RATE := 1.6
@@ -30,6 +36,9 @@ var active := false
 ## Anything with move_vector, fire_held and consume_look(). Set by the level.
 var touch = null
 var camera: Camera3D
+var hull := MAX_HULL
+## Seconds until a shot-down jet can fly again.
+var repair_left := 0.0
 
 var _model: Node3D
 var _cooldown := 0.0
@@ -95,9 +104,12 @@ func _ready() -> void:
 	add_child(camera)
 
 
-## Sit on the pad, engines off.
+## Sit on the pad, engines off. Landing repairs the hull unless the jet was shot down.
 func park(pad: Vector3) -> void:
 	active = false
+	remove_from_group("jet")
+	if repair_left <= 0.0:
+		hull = MAX_HULL
 	global_position = pad + Vector3(0.0, 0.6, 0.0)
 	rotation = Vector3.ZERO
 	_model.rotation = Vector3.ZERO
@@ -106,14 +118,32 @@ func park(pad: Vector3) -> void:
 ## Take off from the pad, heading toward the middle of the map.
 func take_off(pad: Vector3) -> void:
 	active = true
+	add_to_group("jet")
 	global_position = pad + Vector3(0.0, MIN_ALTITUDE + 1.0, 0.0)
 	var toward := Vector3(-pad.x, 0.0, -pad.z).normalized()
 	rotation = Vector3(0.0, atan2(-toward.x, -toward.z), 0.0)
 	camera.make_current()
 
 
+func can_board() -> bool:
+	return repair_left <= 0.0
+
+
+func take_damage(amount: int) -> void:
+	if not active or amount <= 0:
+		return
+	hull = maxi(0, hull - amount)
+	if hull == 0:
+		repair_left = REPAIR_TIME
+		shot_down.emit()
+
+
 func _physics_process(delta: float) -> void:
 	if not active:
+		if repair_left > 0.0:
+			repair_left -= delta
+			if repair_left <= 0.0:
+				hull = MAX_HULL
 		return
 	var stick := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var firing := Input.is_action_pressed("fire")
