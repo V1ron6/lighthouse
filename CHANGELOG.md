@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [Stage 9] - 2026-11-28
+
+Hangar and jet moved to Stage 10.
+
+### Added
+- `scenes/base/comrade.gd`: the player's own soldiers. States: guard, engage, fall back, down. They choose targets (enemies nearest the lighthouse first, weakest first), keep distance, strafe, shoot (12 damage, 80% accuracy), and take cover behind the lighthouse when below 35% health. A downed comrade returns to its post after 25 seconds.
+- Comrades defend the lighthouse beside the player in base defence. Missions stay solo.
+- While the player is away, each comrade stops 2 attackers in the carry-on calculation (`DEFENDED_PER_COMRADE`). The choice panel shows turrets and comrades.
+- `comrade` item (crew type, 900 qubits) in the Market and Armoury. Comrade slots = 2 + rank index. New games start with 2 comrades.
+- Scouts and soldiers now attack comrades that get close. Cunning soldiers count comrades as threats when deciding to retreat.
+
 ## [Stage 8] - 2026-11-27
 
 Hangar and jet moved to Stage 9 so the alien AI could come first.

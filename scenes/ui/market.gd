@@ -8,9 +8,10 @@ const TYPE_TITLES := {
 	"raw": "RAW GOODS (prices change)",
 	"weapon": "WEAPONS",
 	"defence": "LIGHTHOUSE DEFENCES",
+	"crew": "CREW",
 	"vehicle": "VEHICLES",
 }
-const SECTION_ORDER: Array[String] = ["raw", "weapon", "defence", "vehicle"]
+const SECTION_ORDER: Array[String] = ["raw", "weapon", "defence", "crew", "vehicle"]
 
 var _colony_ids: Array[String] = []
 var _colony_pick: OptionButton

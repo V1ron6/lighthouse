@@ -6,6 +6,7 @@ const PlayerScene := preload("res://scenes/player/player.tscn")
 const HudScript := preload("res://scenes/ui/game_hud.gd")
 const BaseScript := preload("res://scenes/base/lighthouse_base.gd")
 const TurretScript := preload("res://scenes/base/turret.gd")
+const ComradeScript := preload("res://scenes/base/comrade.gd")
 const WaveScript := preload("res://scenes/base/wave_manager.gd")
 
 const MAIN_SCENE := "res://scenes/levels/main.tscn"
@@ -38,6 +39,7 @@ func _ready() -> void:
 
 	add_child(BaseScript.new())
 	_build_turrets()
+	_build_comrades()
 
 	_hud = HudScript.new()
 	add_child(_hud)
@@ -133,6 +135,17 @@ func _build_turrets() -> void:
 		var turret: StaticBody3D = TurretScript.new()
 		turret.position = TURRET_SPOTS[i]
 		add_child(turret)
+
+
+## The player's comrades, stationed in a ring around the lighthouse.
+func _build_comrades() -> void:
+	var count: int = GameManager.usable_comrades()
+	for i in count:
+		var angle := TAU * float(i) / maxf(1.0, float(count)) + 0.4
+		var comrade: CharacterBody3D = ComradeScript.new()
+		comrade.post = Vector3(cos(angle) * 5.5, 0.0, sin(angle) * 5.5)
+		comrade.position = comrade.post + Vector3(0.0, 0.1, 0.0)
+		add_child(comrade)
 
 
 func _spawn_player() -> void:

@@ -20,13 +20,15 @@ const ITEMS := {
 	"interceptor": {"name": "Interceptor jet", "type": "vehicle", "min_rank": 2, "price": 7000},
 	"gunship": {"name": "Gunship", "type": "vehicle", "min_rank": 4, "price": 15000},
 
+	"comrade": {"name": "Comrade soldier", "type": "crew", "min_rank": 0, "price": 900},
+
 	# Raw goods. Their prices change over time (see GameManager.roll_prices).
 	"ammo": {"name": "Ammo crate", "type": "raw", "min_rank": 0, "price": 20},
 	"fuel": {"name": "Fuel cell", "type": "raw", "min_rank": 0, "price": 35},
 	"supplies": {"name": "Supply pack", "type": "raw", "min_rank": 0, "price": 25},
 }
 
-const TYPE_ORDER: Array[String] = ["weapon", "defence", "vehicle"]
+const TYPE_ORDER: Array[String] = ["weapon", "defence", "crew", "vehicle"]
 
 
 static func base_price(item_id: String) -> int:

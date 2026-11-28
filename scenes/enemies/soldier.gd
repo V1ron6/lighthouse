@@ -281,6 +281,10 @@ func _count_allies() -> int:
 ## The player, plus every turret that can reach this soldier.
 func _count_threats() -> int:
 	var count := 1 if _player != null else 0
+	for comrade in get_tree().get_nodes_in_group("allies"):
+		var friend := comrade as Node3D
+		if friend != null and friend.global_position.distance_to(global_position) <= TURRET_THREAT_RADIUS:
+			count += 1
 	for turret in get_tree().get_nodes_in_group("turrets"):
 		var node := turret as Node3D
 		if node != null and node.global_position.distance_to(global_position) <= TURRET_THREAT_RADIUS:
@@ -319,7 +323,22 @@ func _pick_target() -> void:
 		if to_player.length() <= range_limit:
 			target = _player
 			return
-	target = _base
+	var ally := _nearest_ally(12.0)
+	target = ally if ally != null else _base
+
+
+func _nearest_ally(max_distance: float) -> Node3D:
+	var best: Node3D = null
+	var best_distance := max_distance
+	for node in get_tree().get_nodes_in_group("allies"):
+		var ally := node as Node3D
+		if ally == null:
+			continue
+		var distance := ally.global_position.distance_to(global_position)
+		if distance < best_distance:
+			best_distance = distance
+			best = ally
+	return best
 
 
 func _has_line_of_sight() -> bool:

@@ -159,7 +159,23 @@ func _pick_target() -> void:
 		if to_player.length() <= AGGRO_RANGE:
 			target = _player
 			return
-	target = _base
+	var ally := _nearest_ally(5.0)
+	target = ally if ally != null else _base
+
+
+## A comrade close by that is worth biting on the way to the lighthouse.
+func _nearest_ally(max_distance: float) -> Node3D:
+	var best: Node3D = null
+	var best_distance := max_distance
+	for node in get_tree().get_nodes_in_group("allies"):
+		var ally := node as Node3D
+		if ally == null:
+			continue
+		var distance := ally.global_position.distance_to(global_position)
+		if distance < best_distance:
+			best_distance = distance
+			best = ally
+	return best
 
 
 func take_hit(damage: int) -> void:

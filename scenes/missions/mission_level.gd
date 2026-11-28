@@ -116,8 +116,8 @@ func _trigger_attack() -> void:
 	var text := "ALERT: the lighthouse is under attack!\nAttackers: %d\n\n" % strength
 	text += "Defend the base: this mission is abandoned and its reward (%d qubits, %d points) is lost.\n\n" % [
 		int(_mission["reward_qubits"]), int(_mission["reward_points"])]
-	text += "Carry on: your turrets stop %d attackers. The base takes about %d damage and you lose about %d rank points." % [
-		int(preview["defended"]), int(preview["base_damage"]) + int(preview["core_damage"]), int(preview["points_lost"])]
+	text += "Carry on: your %d turrets and %d comrades stop %d attackers. The base takes about %d damage and you lose about %d rank points." % [
+		int(preview["turrets"]), int(preview["comrades"]), int(preview["defended"]), int(preview["base_damage"]) + int(preview["core_damage"]), int(preview["points_lost"])]
 	_panel_mode = "attack"
 	get_tree().paused = true
 	_hud.show_panel(text, ["Defend the base", "Carry on with the mission"])

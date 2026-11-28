@@ -3,7 +3,7 @@ extends Control
 ## Shows what the player owns and what is still locked. Buying comes in Stage 7.
 
 const ItemData := preload("res://data/item_data.gd")
-const TYPE_TITLES := {"weapon": "WEAPONS", "defence": "LIGHTHOUSE DEFENCES", "vehicle": "VEHICLES"}
+const TYPE_TITLES := {"weapon": "WEAPONS", "defence": "LIGHTHOUSE DEFENCES", "crew": "CREW", "vehicle": "VEHICLES"}
 
 var _list: VBoxContainer
 var _header: Label
@@ -44,7 +44,7 @@ func _ready() -> void:
 
 
 func _rebuild() -> void:
-	_header.text = "ARMOURY  |  %s  |  turret slots: %d" % [GameManager.get_rank_name(), GameManager.max_turrets()]
+	_header.text = "ARMOURY  |  %s  |  turret slots: %d  |  comrade slots: %d" % [GameManager.get_rank_name(), GameManager.max_turrets(), GameManager.max_comrades()]
 	for child in _list.get_children():
 		child.queue_free()
 	for type in ItemData.TYPE_ORDER:

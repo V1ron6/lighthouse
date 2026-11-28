@@ -23,6 +23,10 @@ const RANK_THRESHOLDS: Array[int] = [0, 100, 300, 600, 1000, 1600, 2500]
 ## Base attack while the player is away on a mission (they chose to continue).
 ## Each turret stops this many attackers. The rest damage the base.
 const DEFENDED_PER_TURRET := 4
+## Each comrade left at the base stops this many attackers while the player is away.
+const DEFENDED_PER_COMRADE := 2
+## Comrades the lighthouse can station: this plus one per rank.
+const BASE_COMRADE_SLOTS := 2
 const DAMAGE_PER_LEAKED := 60
 ## Turrets the lighthouse can run at once: this plus one per rank.
 const BASE_TURRET_SLOTS := 1
@@ -46,6 +50,7 @@ const CORE_REPAIR_HP_PER_QUBIT := 2.0
 const STARTING_INVENTORY := {
 	"fighter_jet": 1,
 	"turret": 1,
+	"comrade": 2,
 	"energy_rifle": 1,
 	"machete": 1,
 }
@@ -163,6 +168,15 @@ func usable_turrets() -> int:
 	return mini(inventory.get("turret", 0), max_turrets())
 
 
+## Comrades stationed at the lighthouse: owned, capped by rank.
+func usable_comrades() -> int:
+	return mini(inventory.get("comrade", 0), max_comrades())
+
+
+func max_comrades() -> int:
+	return BASE_COMRADE_SLOTS + rank_index
+
+
 func max_turrets() -> int:
 	return BASE_TURRET_SLOTS + rank_index
 
@@ -232,12 +246,14 @@ func trigger_base_attack(strength: int) -> void:
 ## is attacked by `strength` enemies. Changes nothing.
 func preview_unattended_attack(strength: int) -> Dictionary:
 	var turrets: int = usable_turrets()
-	var defended := turrets * DEFENDED_PER_TURRET
+	var comrades: int = usable_comrades()
+	var defended := turrets * DEFENDED_PER_TURRET + comrades * DEFENDED_PER_COMRADE
 	var leaked := maxi(0, strength - defended)
 	var raw_damage := leaked * DAMAGE_PER_LEAKED
 	var base_damage := mini(base_health, raw_damage)
 	return {
 		"turrets": turrets,
+		"comrades": comrades,
 		"defended": mini(defended, strength),
 		"leaked": leaked,
 		"base_damage": base_damage,

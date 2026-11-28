@@ -15,9 +15,10 @@ Lighthouse is built in stages. After each stage this file and `CHANGELOG.md` are
 | 6 | Rank unlocks for weapons and defences, rank display, Armoury screen | Done (untested in Godot) |
 | 7 | Qubits, automated colony trade and the Market screen | Done (untested in Godot) |
 | 8 | Smarter aliens: soldier with a thinking AI (flank, retreat, regroup), scaled by player rank | Done (untested in Godot) |
-| 9 | Hangar and fighter jet with touch flight controls | Next |
-| 10 | Ten colonies, fall and retake, radio story, first-launch intro story | Planned |
-| 11 | More enemies (heavy, flyer, Mothership) with the same brain, more weapons, polish, Android export | Planned |
+| 9 | Comrades: your own soldiers at the lighthouse (fight beside you, hold the base while you are away) | Done (untested in Godot) |
+| 10 | Hangar and fighter jet with touch flight controls | Next |
+| 11 | Ten colonies, fall and retake, radio story, first-launch intro story | Planned |
+| 12 | More enemies (heavy, flyer, Mothership) with the same brain, more weapons, polish, Android export | Planned |
 
 ## Decisions so far
 
@@ -40,11 +41,14 @@ Lighthouse is built in stages. After each stage this file and `CHANGELOG.md` are
 - Auto trades: up to 6 orders (auto-buy or auto-sell one unit each), run after every mission with the colony chosen when the order was set.
 - Alien intelligence: scouts are instinct only (swarm, never retreat). Soldiers think: tactical (hold range, strafe, shoot, fall back to heal when under 30% health) and, from player rank Sentinel, cunning (flank with allies, shoot while retreating, retreat early when allies are few, threats many or comrades are dying). Soldiers retreat at most twice. Later enemy types get higher intelligence.
 - Waves 1 and 2 are scouts only. Soldiers join from wave 3 (15% per wave, up to 60%). In missions, soldiers appear after the first 3 kills, 15% chance per risk level.
+- Comrades: your own soldiers, stationed at the lighthouse. You start with 2. They fight beside you in base defence, and while you are away on a mission each stops 2 attackers (turrets stop 4). Slots = 2 + rank index. Bought in the Market (900 qubits). A downed comrade returns to its post after 25s, so none are lost for good. Missions are solo.
+- Comrade AI: picks targets (enemies nearest the lighthouse first, weakest first), keeps range and strafes, falls back behind the lighthouse below 35% health and heals. Aliens attack comrades that get close, and cunning soldiers count comrades as threats.
 
 ## Open items
 
 - Rank thresholds, item prices and unlock ranks are placeholders. Tune after playtesting.
 - The machete has no melee code yet.
+- Comrade numbers (damage, health, slots, price, starting 2) are guesses. Starting with 2 comrades goes beyond the stated loadout, so say if you want to start with none.
 - Alien AI numbers (retreat thresholds, ranges, accuracy, soldier share) are untested guesses. Report how fights feel.
 - Colonies cannot fall yet (Stage 9), so the fallen-colony prices are in place but unused. Raw goods are tradable but nothing consumes them yet.
 - Only 4 turret spots exist in the base scene, but slots reach 7 at the top rank.
