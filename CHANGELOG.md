@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [Stage 10] - 2026-11-28
+
+### Added
+- `scenes/vehicles/fighter_jet.gd`: a flyable jet. Stick turns (the jet banks) and pitches, throttle is automatic, twin cannons on the fire button (20 damage, 10 shots a second) with aim assist toward enemies near the nose. Chase camera. Stays between 5 and 90 metres up and turns back at the edge of the map.
+- A hangar with a glowing launch pad beside the lighthouse. Walk to the pad and use the Board button (or E). Land by flying near the pad, low, and using the Land button (or E).
+- HUD context button (`show_action`, `hide_action`, `action_pressed`).
+- Requires owning a fighter jet and the rank to use it.
+
+### Changed
+- While flying, the player leaves the `player` group, so aliens ignore the parked character. Scouts and soldiers drop a stale player reference.
+
 ## [Stage 9] - 2026-11-28
 
 Hangar and jet moved to Stage 10.

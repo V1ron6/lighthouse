@@ -6,6 +6,8 @@ extends CanvasLayer
 signal back_pressed
 ## A button on the centre panel was pressed. Index follows the labels given to show_panel.
 signal panel_choice(index: int)
+## The context button (board the jet, land) was pressed.
+signal action_pressed
 
 const TouchScene := preload("res://scenes/ui/touch_controls.tscn")
 
@@ -18,6 +20,7 @@ var _info: Label
 var _status: Label
 var _banner: Label
 var _banner_tween: Tween
+var _action_button: Button
 var _over_panel: ColorRect
 var _over_label: Label
 var _over_buttons: VBoxContainer
@@ -74,6 +77,15 @@ func _ready() -> void:
 	back.offset_bottom = 76.0
 	add_child(back)
 
+	_action_button = _make_button("", func(): action_pressed.emit())
+	_action_button.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	_action_button.offset_left = -160.0
+	_action_button.offset_right = 160.0
+	_action_button.offset_top = -170.0
+	_action_button.offset_bottom = -106.0
+	_action_button.visible = false
+	add_child(_action_button)
+
 	_build_panel()
 
 	EventBus.qubits_changed.connect(_refresh_info)
@@ -92,6 +104,16 @@ func bind_player(player) -> void:
 
 func set_status(text: String) -> void:
 	_status.text = text
+
+
+## A button at the bottom centre for the thing you can do right now.
+func show_action(text: String) -> void:
+	_action_button.text = text
+	_action_button.visible = true
+
+
+func hide_action() -> void:
+	_action_button.visible = false
 
 
 func show_banner(text: String, seconds: float = 2.0) -> void:

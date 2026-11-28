@@ -7,6 +7,8 @@ const HudScript := preload("res://scenes/ui/game_hud.gd")
 const BaseScript := preload("res://scenes/base/lighthouse_base.gd")
 const TurretScript := preload("res://scenes/base/turret.gd")
 const ComradeScript := preload("res://scenes/base/comrade.gd")
+const JetScript := preload("res://scenes/vehicles/fighter_jet.gd")
+const Fx := preload("res://scripts/fx.gd")
 const WaveScript := preload("res://scenes/base/wave_manager.gd")
 
 const MAIN_SCENE := "res://scenes/levels/main.tscn"
@@ -15,12 +17,21 @@ const PLAYER_START := Vector3(0, 1, 11)
 const TURRET_SPOTS: Array[Vector3] = [
 	Vector3(7, 0, 6), Vector3(-7, 0, 6), Vector3(7, 0, -6), Vector3(-7, 0, -6),
 ]
+## The hangar and its launch pad. The jet is boarded from the pad.
+const HANGAR_POS := Vector3(16, 0, 17)
+const PAD_POS := Vector3(16, 0, 9)
+const BOARD_DISTANCE := 6.0
+const LAND_DISTANCE := 14.0
+const LAND_ALTITUDE := 14.0
 ## Base health restored when a wave is cleared (endless mode only).
 const WAVE_REPAIR := 150
 
 var _hud = null
 var _player = null
 var _waves = null
+var _jet = null
+var _flying := false
+var _prompt_shown := false
 ## True when the player chose to defend the base during a mission.
 var _attack_mode := false
 var _attack_strength := 0
@@ -40,10 +51,12 @@ func _ready() -> void:
 	add_child(BaseScript.new())
 	_build_turrets()
 	_build_comrades()
+	_build_hangar()
 
 	_hud = HudScript.new()
 	add_child(_hud)
 	_spawn_player()
+	_hud.action_pressed.connect(_on_action_pressed)
 
 	_waves = WaveScript.new()
 	_waves.enemy_parent = self
@@ -68,11 +81,14 @@ func _process(_delta: float) -> void:
 		wave_line = "Wave %d   |   %d left" % [_waves.wave, _waves.enemies_left()]
 	else:
 		wave_line = "Next wave in %d" % ceili(_waves.seconds_to_next_wave())
+	if _flying:
+		wave_line += "\nJET   altitude %d   (land at the pad)" % int(_jet.altitude())
 	_hud.set_status("Base %d/%d   Core %d/%d\n%s" % [
 		GameManager.base_health, GameManager.MAX_BASE_HEALTH,
 		GameManager.core_integrity, GameManager.MAX_CORE_INTEGRITY,
 		wave_line,
 	])
+	_update_jet_prompt()
 
 
 func _build_environment() -> void:
@@ -146,6 +162,109 @@ func _build_comrades() -> void:
 		comrade.post = Vector3(cos(angle) * 5.5, 0.0, sin(angle) * 5.5)
 		comrade.position = comrade.post + Vector3(0.0, 0.1, 0.0)
 		add_child(comrade)
+
+
+# --- Hangar and jet ---
+
+func _build_hangar() -> void:
+	var wall := StaticBody3D.new()
+	wall.position = HANGAR_POS + Vector3(0.0, 2.0, 0.0)
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = Vector3(9.0, 4.0, 6.0)
+	shape.shape = box
+	wall.add_child(shape)
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(0.14, 0.2, 0.3)
+	material.metallic = 0.6
+	var mesh := MeshInstance3D.new()
+	var box_mesh := BoxMesh.new()
+	box_mesh.size = Vector3(9.0, 4.0, 6.0)
+	box_mesh.material = material
+	mesh.mesh = box_mesh
+	wall.add_child(mesh)
+	var sign_light := MeshInstance3D.new()
+	var sign_mesh := BoxMesh.new()
+	sign_mesh.size = Vector3(5.0, 0.3, 0.1)
+	sign_mesh.material = Fx.glow_material(Color(0.3, 0.88, 1.0))
+	sign_light.mesh = sign_mesh
+	sign_light.position = Vector3(0.0, 1.2, -3.06)
+	wall.add_child(sign_light)
+	add_child(wall)
+
+	var pad := MeshInstance3D.new()
+	var pad_mesh := CylinderMesh.new()
+	pad_mesh.top_radius = 3.0
+	pad_mesh.bottom_radius = 3.0
+	pad_mesh.height = 0.1
+	pad_mesh.material = Fx.glow_material(Color(0.3, 0.88, 1.0).darkened(0.55))
+	pad.mesh = pad_mesh
+	pad.position = PAD_POS + Vector3(0.0, 0.05, 0.0)
+	add_child(pad)
+
+	if GameManager.can_use("fighter_jet"):
+		_jet = JetScript.new()
+		add_child(_jet)
+		_jet.park(PAD_POS)
+
+
+func _flat_distance(a: Vector3, b: Vector3) -> float:
+	return Vector2(a.x - b.x, a.z - b.z).length()
+
+
+func _update_jet_prompt() -> void:
+	if _jet == null:
+		return
+	var text := ""
+	if _flying:
+		if _flat_distance(_jet.global_position, PAD_POS) <= LAND_DISTANCE and _jet.altitude() <= LAND_ALTITUDE:
+			text = "Land the jet [E]"
+	elif _flat_distance(_player.global_position, PAD_POS) <= BOARD_DISTANCE:
+		text = "Board the jet [E]"
+	if text != "":
+		_hud.show_action(text)
+	else:
+		_hud.hide_action()
+	_prompt_shown = text != ""
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_E and _prompt_shown:
+		_on_action_pressed()
+
+
+func _on_action_pressed() -> void:
+	if _jet == null or not _prompt_shown:
+		return
+	if _flying:
+		_land()
+	else:
+		_board()
+
+
+## The player steps into the jet. Aliens stop seeing the player while the jet is up.
+func _board() -> void:
+	_flying = true
+	_player.remove_from_group("player")
+	_player.visible = false
+	_player.process_mode = Node.PROCESS_MODE_DISABLED
+	_jet.touch = _hud.touch
+	_jet.take_off(PAD_POS)
+	_hud.hide_action()
+	_hud.show_banner("Airborne", 1.5)
+
+
+func _land() -> void:
+	_flying = false
+	_jet.park(PAD_POS)
+	_player.global_position = PAD_POS + Vector3(-4.5, 0.1, 0.0)
+	_player.velocity = Vector3.ZERO
+	_player.process_mode = Node.PROCESS_MODE_INHERIT
+	_player.visible = true
+	_player.add_to_group("player")
+	_player.camera.make_current()
+	_hud.hide_action()
+	_hud.show_banner("Landed", 1.5)
 
 
 func _spawn_player() -> void:

@@ -313,6 +313,9 @@ func _pick_target() -> void:
 		_player = get_tree().get_first_node_in_group("player") as Node3D
 	if _base == null or not is_instance_valid(_base):
 		_base = get_tree().get_first_node_in_group("base") as Node3D
+	# The player leaves the "player" group while flying the jet.
+	if _player != null and not _player.is_in_group("player"):
+		_player = null
 	if _base == null:
 		target = _player
 		return
