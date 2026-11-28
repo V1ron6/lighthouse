@@ -215,3 +215,4 @@ func _fire(forward: Vector3) -> void:
 	if victim != null and victim.has_method("take_hit"):
 		victim.take_hit(DAMAGE)
 	Fx.tracer(self, nose, end, BOLT_COLOR, 0.08)
+	Sfx.play("cannon", -6.0)

@@ -75,3 +75,7 @@ The logo lives at `assets/logo/logo.png`. Replace that file with the final versi
 ## License
 
 To be decided (personal or open source).
+
+## Audio
+
+Placeholder sound effects are generated and live in `audio/sfx/`. Replace any file with a better one of the same name. See `assets/README.md` for the other (currently empty) asset folders.

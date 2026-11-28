@@ -29,6 +29,7 @@ var _last_health := 100
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	Sfx.start_ambience()
 
 	touch = TouchScene.instantiate()
 	add_child(touch)
@@ -94,6 +95,10 @@ func _ready() -> void:
 	EventBus.rank_changed.connect(_on_rank_changed)
 	EventBus.radio_message.connect(_on_radio_message)
 	_refresh_info()
+
+
+func _exit_tree() -> void:
+	Sfx.stop_ambience()
 
 
 ## Connect the player's health and rifle heat to the HUD.

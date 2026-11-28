@@ -212,6 +212,7 @@ func _fire_at(aim: Vector3) -> void:
 	else:
 		end += Vector3(randf_range(-1.5, 1.5), randf_range(-1.0, 1.0), randf_range(-1.5, 1.5))
 	Fx.tracer(self, global_position, end, EYE_COLOR)
+	Sfx.play("alien_bolt", -10.0)
 
 
 # --- Damage ---
@@ -219,6 +220,7 @@ func _fire_at(aim: Vector3) -> void:
 func take_hit(damage: int) -> void:
 	if _dead:
 		return
+	Sfx.play("hit", -12.0)
 	health -= damage
 	_body_material.albedo_color = Color.WHITE
 	get_tree().create_timer(0.08).timeout.connect(_restore_color)

@@ -5,6 +5,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [Stage 12b] - 2026-11-28
+
+### Added
+- `audio/sfx/`: eleven generated placeholder sounds (rifle, turret, alien bolt, hit, death, jet cannon, base alert, radio, click, promotion, base hum).
+- `autoload/sfx.gd` (`Sfx`): plays them with a small player pool, a minimum gap per sound and slight pitch variation. Reacts to EventBus (kills, radio, base attack, buying and selling, promotion). Gunfire and hit sounds are called from the weapons and enemies. The base hum runs while a level HUD is on screen.
+- `assets/README.md` explaining why the other asset folders are empty.
+
 ## [Stage 12] - 2026-11-28
 
 The Mothership, machete and extra weapons move to Stage 13.

@@ -19,8 +19,9 @@ Lighthouse is built in stages. After each stage this file and `CHANGELOG.md` are
 | 10 | Hangar and fighter jet with touch flight controls | Done (untested in Godot) |
 | 11 | Ten colonies, fall and retake, radio story, first-launch intro story, two endings | Done (untested in Godot) |
 | 12 | Heavy and flyer aliens with the thinking AI; flyers hunt the jet | Done (untested in Godot) |
+| 12b | Placeholder sound effects and a sound manager (`Sfx`) | Done (untested in Godot) |
 | 13 | Mothership boss, machete and more weapons, the full 20 missions | Next |
-| 14 | Polish (real menu, audio, art pass), Android export | Planned |
+| 14 | Polish (real menu, music, icons and font, art pass), Android export | Planned |
 
 ## Decisions so far
 
@@ -52,10 +53,12 @@ Lighthouse is built in stages. After each stage this file and `CHANGELOG.md` are
 - Heavy: slow, 220 health, always cunning. Armour halves damage, but the chest core glows for 1.2s after each shot it fires and then hits do double. Heavies join from wave 5 (up to 25%).
 - Flyer: 45 health, circles above its target then dives and strafes, breaks off, retreats to heal when hurt. Hunts the jet first. Flyers join from wave 4 (up to 30%).
 - The jet now has 200 hull. At 0 it is shot down: you are put back on the pad and the jet needs 20s of repairs. A normal landing repairs it fully.
+- Sound: 11 generated placeholder sounds in `audio/sfx/` (rifle, turret, alien bolt, hit, death, jet cannon, base alert, radio, click, promotion, base hum). Replace any file with a better one of the same name. `Sfx.play("name", volume_db)` plays one. Icons, models, textures, fonts, music and voiced radio are still empty.
 
 ## Open items
 
 - Rank thresholds, item prices and unlock ranks are placeholders. Tune after playtesting.
+- Sounds are crude synth placeholders. Godot imports the .wav files the first time you open the project.
 - The machete has no melee code yet (planned for Stage 13).
 - Heavy and flyer numbers are untested guesses, as are the spawn shares.
 - Retaking a colony is automatic. If you would rather fight a special retake mission, say so.

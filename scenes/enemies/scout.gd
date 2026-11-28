@@ -184,6 +184,7 @@ func _nearest_ally(max_distance: float) -> Node3D:
 func take_hit(damage: int) -> void:
 	if _dead:
 		return
+	Sfx.play("hit", -12.0)
 	health -= damage
 	_body_material.albedo_color = Color.WHITE
 	get_tree().create_timer(0.08).timeout.connect(_restore_color)

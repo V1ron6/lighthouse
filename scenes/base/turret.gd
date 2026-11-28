@@ -71,6 +71,7 @@ func _physics_process(delta: float) -> void:
 		target.take_hit(DAMAGE)
 		var muzzle := _head.global_position + (-_head.global_transform.basis.z) * 0.95
 		Fx.tracer(self, muzzle, aim_point, BOLT_COLOR)
+		Sfx.play("turret", -9.0)
 
 
 func _nearest_enemy() -> Node3D:

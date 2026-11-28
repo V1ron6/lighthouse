@@ -282,6 +282,7 @@ func _try_fire() -> void:
 	else:
 		to += Vector3(randf_range(-1.0, 1.0), randf_range(-0.4, 0.4), randf_range(-1.0, 1.0))
 	Fx.tracer(self, from, to, BOLT_COLOR)
+	Sfx.play("rifle", -11.0)
 
 
 # --- Damage ---

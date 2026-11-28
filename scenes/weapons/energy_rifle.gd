@@ -78,6 +78,7 @@ func _shoot() -> void:
 			collider.take_hit(DAMAGE)
 		_spawn_impact(end)
 	_spawn_tracer(_muzzle.global_position, end)
+	Sfx.play("rifle", -4.0)
 
 
 func _build_model() -> void:

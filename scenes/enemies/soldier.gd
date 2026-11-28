@@ -382,6 +382,7 @@ func _try_fire(distance: float) -> void:
 	else:
 		to += Vector3(randf_range(-1.2, 1.2), randf_range(-0.5, 0.5), randf_range(-1.2, 1.2))
 	Fx.tracer(self, from, to, BOLT_COLOR)
+	Sfx.play("alien_bolt", -10.0)
 
 
 # --- Damage ---
@@ -389,6 +390,7 @@ func _try_fire(distance: float) -> void:
 func take_hit(damage: int) -> void:
 	if _dead:
 		return
+	Sfx.play("hit", -12.0)
 	health -= damage
 	_body_material.albedo_color = Color.WHITE
 	get_tree().create_timer(0.08).timeout.connect(_restore_color)
