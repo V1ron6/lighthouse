@@ -5,6 +5,8 @@ extends Node
 
 const ItemData := preload("res://data/item_data.gd")
 const ColonyData := preload("res://data/colony_data.gd")
+const StoryData := preload("res://data/story_data.gd")
+const STORY_SCENE := "res://scenes/story/story_screen.tscn"
 
 enum MissionState { NONE, ACTIVE, BASE_UNDER_ATTACK, COMPLETE, FAILED, ABANDONED }
 
@@ -37,6 +39,13 @@ const FALLEN_BUY_FACTOR := 0.8
 const MAX_TRADE_ORDERS := 6
 ## Raw goods prices move by up to this much each roll, within 50% to 150% of base.
 const PRICE_SWING := 0.15
+## Colonies. Each ended mission may cost one: a chance after a win, a higher one after
+## a failed or abandoned mission. At most MAX_FALLEN are down at once. A fallen colony
+## is retaken after RETAKE_AFTER won missions.
+const FALL_CHANCE_WIN := 0.25
+const FALL_CHANCE_LOSS := 0.35
+const MAX_FALLEN := 5
+const RETAKE_AFTER := 3
 ## Rank points lost for leaving the base: a flat part plus a part per leaked attacker.
 const PENALTY_BASE := 10
 const PENALTY_PER_LEAKED := 12
@@ -73,12 +82,25 @@ var raw_prices: Dictionary = {}
 ## One unit of each is traded per trade cycle (after every mission).
 var trade_orders: Dictionary = {}
 var last_trade_log: Array[String] = []
+var missions_completed: int = 0
+## Fallen colony id -> missions won since it fell.
+var colony_progress: Dictionary = {}
+## Ids of the once-only radio messages already heard.
+var radio_heard: Array[String] = []
+## Every transmission received: {"title", "text"}.
+var radio_log: Array[Dictionary] = []
+## "", "sever" or "keep".
+var ending: String = ""
+## Content for the story screen. See story_screen.gd.
+var pending_story: Dictionary = {}
 
 
 func _ready() -> void:
 	new_game()
 	load_game()
-	EventBus.mission_completed.connect(func(_id, _ok): run_trade_cycle())
+	EventBus.mission_completed.connect(_on_mission_completed)
+	EventBus.mission_abandoned.connect(func(_id): _advance_colonies(false))
+	EventBus.rank_changed.connect(_on_rank_promoted)
 
 
 # --- New game / reset ---
@@ -97,6 +119,12 @@ func new_game() -> void:
 	pending_attack = {}
 	trade_orders = {}
 	last_trade_log.clear()
+	missions_completed = 0
+	colony_progress = {}
+	radio_heard.clear()
+	radio_log.clear()
+	ending = ""
+	pending_story = {}
 	_reset_prices()
 	_emit_all()
 
@@ -432,6 +460,7 @@ func mark_colony_fallen(colony_id: String) -> void:
 	if colony_id in fallen_colonies:
 		return
 	fallen_colonies.append(colony_id)
+	colony_progress[colony_id] = 0
 	EventBus.colony_fell.emit(colony_id)
 
 
@@ -439,7 +468,93 @@ func mark_colony_retaken(colony_id: String) -> void:
 	if colony_id not in fallen_colonies:
 		return
 	fallen_colonies.erase(colony_id)
+	colony_progress.erase(colony_id)
 	EventBus.colony_retaken.emit(colony_id)
+
+
+func _on_mission_completed(_id: String, success: bool) -> void:
+	run_trade_cycle()
+	if success:
+		missions_completed += 1
+		broadcast("mission_%d" % missions_completed)
+	_advance_colonies(success)
+
+
+## Retakes colonies that waited long enough, then may let a new one fall.
+func _advance_colonies(success: bool) -> void:
+	if success:
+		for id in colony_progress.keys():
+			colony_progress[id] += 1
+			if colony_progress[id] >= RETAKE_AFTER:
+				mark_colony_retaken(id)
+				add_radio_entry("Colony retaken: %s" % ColonyData.colony_name(id),
+					"%s is ours again. The swarm has been driven out and the traders are returning." % ColonyData.colony_name(id))
+	var chance := FALL_CHANCE_WIN if success else FALL_CHANCE_LOSS
+	if fallen_colonies.size() >= MAX_FALLEN or randf() >= chance:
+		save_game()
+		return
+	var standing: Array[String] = []
+	for id in ColonyData.ids():
+		if id not in fallen_colonies:
+			standing.append(id)
+	if standing.is_empty():
+		save_game()
+		return
+	var fallen_id: String = standing.pick_random()
+	mark_colony_fallen(fallen_id)
+	add_radio_entry("Colony lost: %s" % ColonyData.colony_name(fallen_id),
+		"%s has stopped answering. The swarm took it. Win %d more missions and we will take it back. Until then it pays less and sells cheaper." % [
+			ColonyData.colony_name(fallen_id), RETAKE_AFTER])
+	save_game()
+
+
+# --- Radio and story ---
+
+func _on_rank_promoted(new_index: int, old_index: int) -> void:
+	for i in range(old_index + 1, new_index + 1):
+		broadcast("rank_%d" % i)
+
+
+## Plays a once-only transmission from StoryData.RADIO.
+func broadcast(message_id: String) -> void:
+	if message_id in radio_heard or not StoryData.RADIO.has(message_id):
+		return
+	radio_heard.append(message_id)
+	var message: Dictionary = StoryData.RADIO[message_id]
+	add_radio_entry(message["title"], message["text"])
+
+
+func add_radio_entry(title: String, text: String) -> void:
+	radio_log.append({"title": title, "text": text})
+	while radio_log.size() > 60:
+		radio_log.pop_front()
+	EventBus.radio_message.emit(title)
+
+
+## Set up the story screen and open it.
+func open_story(pages: Array, title: String, done_key: String = "", choices: Array = []) -> void:
+	pending_story = {"pages": pages, "title": title, "done": done_key, "choices": choices}
+	get_tree().change_scene_to_file(STORY_SCENE)
+
+
+func finish_story(done_key: String) -> void:
+	if done_key == "intro":
+		has_seen_intro = true
+		save_game()
+
+
+func can_make_final_choice() -> bool:
+	return ending == "" and rank_index >= RANK_NAMES.size() - 1
+
+
+func choose_ending(choice: String) -> void:
+	ending = choice
+	save_game()
+	pending_story = {
+		"pages": StoryData.ENDINGS[choice],
+		"title": "ENDING",
+		"done": "",
+	}
 
 
 # --- Save / load ---
@@ -455,6 +570,11 @@ func save_game() -> void:
 		"has_seen_intro": has_seen_intro,
 		"raw_prices": raw_prices,
 		"trade_orders": trade_orders,
+		"missions_completed": missions_completed,
+		"colony_progress": colony_progress,
+		"radio_heard": radio_heard,
+		"radio_log": radio_log,
+		"ending": ending,
 	}
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file == null:
@@ -489,6 +609,28 @@ func load_game() -> bool:
 	if typeof(saved_fallen) == TYPE_ARRAY:
 		for colony in saved_fallen:
 			fallen_colonies.append(str(colony))
+	missions_completed = int(data.get("missions_completed", 0))
+	ending = str(data.get("ending", ""))
+	colony_progress = {}
+	var saved_progress: Variant = data.get("colony_progress", {})
+	if typeof(saved_progress) == TYPE_DICTIONARY:
+		for key in saved_progress:
+			if str(key) in fallen_colonies:
+				colony_progress[str(key)] = int(saved_progress[key])
+	for id in fallen_colonies:
+		if not colony_progress.has(id):
+			colony_progress[id] = 0
+	radio_heard.clear()
+	var saved_heard: Variant = data.get("radio_heard", [])
+	if typeof(saved_heard) == TYPE_ARRAY:
+		for id in saved_heard:
+			radio_heard.append(str(id))
+	radio_log.clear()
+	var saved_log: Variant = data.get("radio_log", [])
+	if typeof(saved_log) == TYPE_ARRAY:
+		for entry in saved_log:
+			if typeof(entry) == TYPE_DICTIONARY:
+				radio_log.append({"title": str(entry.get("title", "")), "text": str(entry.get("text", ""))})
 	_reset_prices()
 	var saved_prices: Variant = data.get("raw_prices", {})
 	if typeof(saved_prices) == TYPE_DICTIONARY:

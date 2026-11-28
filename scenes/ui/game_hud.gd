@@ -92,6 +92,7 @@ func _ready() -> void:
 	EventBus.points_changed.connect(_refresh_info)
 	EventBus.rank_changed.connect(_refresh_info)
 	EventBus.rank_changed.connect(_on_rank_changed)
+	EventBus.radio_message.connect(_on_radio_message)
 	_refresh_info()
 
 
@@ -183,6 +184,10 @@ func _refresh_info(_a: Variant = null, _b: Variant = null) -> void:
 	var to_next := GameManager.points_to_next_rank()
 	var progress := "MAX" if to_next == 0 else "%d to next" % to_next
 	_info.text = "%s (%s)   |   %d qubits" % [GameManager.get_rank_name(), progress, GameManager.qubits]
+
+
+func _on_radio_message(title: String) -> void:
+	show_banner("RADIO: " + title, 4.0)
 
 
 func _on_rank_changed(new_index: int, old_index: int) -> void:

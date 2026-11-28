@@ -5,6 +5,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [Stage 11] - 2026-11-28
+
+### Added
+- `data/story_data.gd`: the intro story, ten radio transmissions, the final transmission and two endings.
+- `scenes/story/story_screen.tscn`: a page reader used for the intro, radio log, colony status and endings.
+- First launch shows the filler intro story before the hub.
+- Colonies can fall after missions and are retaken after 3 won missions. Radio messages announce both. `GameManager`: `missions_completed`, `colony_progress`, `broadcast`, `add_radio_entry`, `open_story`, `choose_ending`, `can_make_final_choice`.
+- Hub buttons: Radio log, Colonies, and FINAL TRANSMISSION (at Keeper of the Light). Two endings: The Dark Dawn and The Eternal Watch.
+- HUD shows a RADIO banner when a transmission arrives.
+- Saved: missions won, colony progress, radio messages and log, and the chosen ending.
+
+### Changed
+- Hub rebuilt in two columns so every button fits on a phone screen.
+
 ## [Stage 10] - 2026-11-28
 
 ### Added

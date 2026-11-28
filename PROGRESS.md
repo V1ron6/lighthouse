@@ -17,7 +17,7 @@ Lighthouse is built in stages. After each stage this file and `CHANGELOG.md` are
 | 8 | Smarter aliens: soldier with a thinking AI (flank, retreat, regroup), scaled by player rank | Done (untested in Godot) |
 | 9 | Comrades: your own soldiers at the lighthouse (fight beside you, hold the base while you are away) | Done (untested in Godot) |
 | 10 | Hangar and fighter jet with touch flight controls | Done (untested in Godot) |
-| 11 | Ten colonies, fall and retake, radio story, first-launch intro story | Next |
+| 11 | Ten colonies, fall and retake, radio story, first-launch intro story, two endings | Done (untested in Godot) |
 | 12 | More enemies (heavy, flyer, Mothership) with the same brain, more weapons, polish, Android export | Planned |
 
 ## Decisions so far
@@ -45,11 +45,17 @@ Lighthouse is built in stages. After each stage this file and `CHANGELOG.md` are
 - Comrade AI: picks targets (enemies nearest the lighthouse first, weakest first), keeps range and strafes, falls back behind the lighthouse below 35% health and heals. Aliens attack comrades that get close, and cunning soldiers count comrades as threats.
 - Jet: a hangar and launch pad stand beside the lighthouse in base defence. Walk to the pad, press Board (or E), and fly. Stick turns and pitches (push up = nose up), throttle is automatic, the fire button shoots twin cannons with aim assist. Land back at the pad with the Land button. Needs the fighter jet in your inventory and the rank to use it. Missions are on foot, so no jet there.
 - While you are in the jet, aliens do not target you (your character is parked). The jet cannot be hurt until flyers arrive in a later stage.
+- Colonies: after every ended mission a colony may fall (25% after a win, 35% after a failed or abandoned mission, at most 5 down at once). A fallen colony is retaken automatically after 3 won missions, with a radio message. Fallen colonies use the cheaper trade prices.
+- Story: intro pages on first launch, 10 once-only radio messages (missions won and rank-ups), plus dynamic colony lost and retaken transmissions, all kept in the Radio log. At Keeper of the Light the hub shows FINAL TRANSMISSION with two choices: Sever the Core (The Dark Dawn) or Keep the light (The Eternal Watch).
 
 ## Open items
 
 - Rank thresholds, item prices and unlock ranks are placeholders. Tune after playtesting.
 - The machete has no melee code yet.
+- Retaking a colony is automatic. If you would rather fight a special retake mission, say so.
+- Story text is a first draft (original, written by Claude). Edit `data/story_data.gd` freely.
+- Only 3 of the planned 20 main missions exist.
+- The hub is a test screen with a debug column; a proper menu comes in the polish stage.
 - Jet handling (speed, turn rates, aim assist cone, camera) is a first guess. Report how it feels on the phone. The interceptor and gunship are in the Market but not flyable yet.
 - Comrade numbers (damage, health, slots, price, starting 2) are guesses. Starting with 2 comrades goes beyond the stated loadout, so say if you want to start with none.
 - Alien AI numbers (retreat thresholds, ranges, accuracy, soldier share) are untested guesses. Report how fights feel.
